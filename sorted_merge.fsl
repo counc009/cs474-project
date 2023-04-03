@@ -25,9 +25,9 @@
 (Var l1 Loc)
 (Var l2 Loc)
 (Var l3 Loc)
-(lemma (x l1 l2 l3) (=> (and (<= (key x) (Min l1)) (<= (key x) (Min l2))
-                             (= (Keys l3) (SetUnion (Keys l1) (Keys l2))))
-                        (<= (key x) (Min l3))))
+(lemma (l1 l2 l3) (=> (= (Keys l3) (SetUnion (Keys l1) (Keys l2)))
+                      (ite (<= (Min l1) (Min l2)) (= (Min l3) (Min l1))
+                                                  (= (Min l3) (Min l2)))))
 
 (Var oldkeysx SetInt)
 (Var oldkeysy SetInt)

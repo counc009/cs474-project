@@ -5,28 +5,41 @@ Monday, April 3, 2023
   the minimum of the list, rather than just being smaller than the next value
   (where of course the tail should also be sorted).
   - In the first attempt to verify it, it identified 6 BBs:
-    1. not proven ( 0.792 seconds)
+
+    BB 1. not proven ( 0.792 seconds)
       + Case of x = nil
-    2. not proven ( 0.749 seconds)
+
+    BB 2. not proven ( 0.749 seconds)
       + Case of y = nil
-    3. is valid   ( 0.856 seconds)
+
+    BB 3. is valid   ( 0.856 seconds)
       + Case up to the recursive call when key x <= key y
-    4. not proven (22.487 seconds)
+
+    BB 4. not proven (22.487 seconds)
       + Full case when key x <= key y
-    5. is valid   ( 0.863 seconds)
+
+    BB 5. is valid   ( 0.863 seconds)
       + Case up to the recursive call when key y < key x
-    6. not proven ( 4.513 seconds)
+
+    BB 6. not proven ( 4.513 seconds)
       + Full case when key y < key x
   - On the next attempt, I modify the definition of Sorted to match what's used
     in the existing examples on the thought that it may be a more amenable
     definition for the automated verification. I also added the lemmas I saw in
     the other benchmarks which may have also helped
-    1. is valid   (0.881 s)
-    2. is valid   (0.880 s)
-    3. is valid   (0.995 s)
-    4. not proven (4.259 s)
-    5. is valid   (1.014 s)
-    6. not proven (5.552 s)
+
+    BB 1. is valid   (0.881 s)
+
+    BB 2. is valid   (0.880 s)
+
+    BB 3. is valid   (0.995 s)
+
+    BB 4. not proven (4.259 s)
+
+    BB 5. is valid   (1.014 s)
+
+    BB 6. not proven (5.552 s)
+
     So we can see that it does much better this time in that it is able to
     verify the base cases, but still fails on the recursive cases.
     + My thought is that we need something here that will tell us that the
@@ -53,14 +66,35 @@ Monday, April 3, 2023
     BB 3 it can tell that (key x) <= (Min y)
     + Slightly surprisingly it is able to verify that, though it is obviously
       true.
-    + I managed to remove the assumptions from the code by adding a lemma
-      saying that if (key x) <= (Min l1) and (key x) <= (Min l2) and
-      (Keys l3) = (SetUnion (Keys l1) (Keys l2)) then (key x) <= (Min l3),
-      which is pretty obviously true, though this lemma significantly increased
-      the verification time:
-      1. is valid ( 3.087 s)
-      2. is valid ( 2.973 s)
-      3. is valid ( 7.072 s)
-      4. is valid (88.357 s)
-      5. is valid ( 6.682 s)
-      6. is valid (83.593 s)
+  - I managed to remove the assumptions from the code by adding a lemma saying
+    that if (key x) <= (Min l1) and (key x) <= (Min l2) and (Keys l3) =
+    (SetUnion (Keys l1) (Keys l2)) then (key x) <= (Min l3), which is pretty
+    obviously true, though this lemma significantly increased the verification
+    time:
+    1. is valid ( 3.087 s)
+    2. is valid ( 2.973 s)
+    3. is valid ( 7.072 s)
+    4. is valid (88.357 s)
+    5. is valid ( 6.682 s)
+    6. is valid (83.593 s)
+  - Just out of curiousity, I'm going to try some other lemmas to see how they
+    impact performance and if the program is still able to be verified with
+    them. By changing the lemma to be (Keys l3) = (SetUnion (Keys l1) (Keys l2)
+    implies that if (Min l1) <= (Min l2) then (Min l3) = (Min l1) and otherwise
+    (Min l3) = (Min l2) it's still able to verify the entire program and much
+    faster:
+
+    BB 1. is valid ( 1.263 s)
+
+    BB 2. is valid ( 1.299 s)
+
+    BB 3. is valid ( 1.996 s)
+
+    BB 4. is valid (13.828 s)
+
+    BB 5. is valid ( 2.364 s)
+
+    BB 6. is valid (15.729 s)
+
+    (Note, the time seems to vary from run to run, but the difference seems to
+    maintain across several runs)
