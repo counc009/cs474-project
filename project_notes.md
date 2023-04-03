@@ -47,3 +47,20 @@ Monday, April 3, 2023
   - Now, just going to add an assumption that (key x) <= (Min tmp) in BB 4 and
     a similar assumption in BB 6 to see what happens. It is now able to verify
     all of the basic blocks!
+  - To try to remove just these assumptions, and instead fold things into
+    obvious lemmas, I'm going to experiment to try to figure out what the tool
+    is able to verify before the recursive call, specifically I'm curious if in
+    BB 3 it can tell that (key x) <= (Min y)
+    + Slightly surprisingly it is able to verify that, though it is obviously
+      true.
+    + I managed to remove the assumptions from the code by adding a lemma
+      saying that if (key x) <= (Min l1) and (key x) <= (Min l2) and
+      (Keys l3) = (SetUnion (Keys l1) (Keys l2)) then (key x) <= (Min l3),
+      which is pretty obviously true, though this lemma significantly increased
+      the verification time:
+      1. is valid ( 3.087 s)
+      2. is valid ( 2.973 s)
+      3. is valid ( 7.072 s)
+      4. is valid (88.357 s)
+      5. is valid ( 6.682 s)
+      6. is valid (83.593 s)
