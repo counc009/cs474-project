@@ -44,3 +44,6 @@ Monday, April 3, 2023
     don't say anything about the support of x and y being distinct meaning that
     the recursive call could be messing with x, this still doesn't make BB 4/6
     verifiable, but that's not unexpected at this point.
+  - Now, just going to add an assumption that (key x) <= (Min tmp) in BB 4 and
+    a similar assumption in BB 6 to see what happens. It is now able to verify
+    all of the basic blocks!
