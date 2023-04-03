@@ -98,3 +98,8 @@ Monday, April 3, 2023
 
     (Note, the time seems to vary from run to run, but the difference seems to
     maintain across several runs)
+* Next, I implemented a singly-linked list split function which splits an sll
+  into 2 lists. It took some effort to make sure that I was assigning things
+  properly to split the list and get the support correct, but thinking through
+  it it carefully and using the debug techniques I did earlier, this worked
+  well, and the program is automatically verified.
