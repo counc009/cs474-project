@@ -1,0 +1,19 @@
+Monday, April 3, 2023
+* After reading the documentation, I decided to write a version of a merge
+  function (like is used as part of merge-sort). I noticed several other
+  benchmarks that use sorted lists, but they define the sorting in relation to
+  the minimum of the list, rather than just being smaller than the next value
+  (where of course the tail should also be sorted).
+  - In the first attempt to verify it, it identified 6 BBs:
+    1. not proven ( 0.792 seconds)
+      + Case of x = nil
+    2. not proven ( 0.749 seconds)
+      + Case of y = nil
+    3. is valid   ( 0.856 seconds)
+      + Case up to the recursive call when key x <= key y
+    4. not proven (22.487 seconds)
+      + Full case when key x <= key y
+    5. is valid   ( 0.863 seconds)
+      + Case up to the recursive call when key y < key x
+    6. not proven ( 4.513 seconds)
+      + Full case when key y < key x
