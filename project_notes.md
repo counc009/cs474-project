@@ -32,3 +32,15 @@ Monday, April 3, 2023
     + My thought is that we need something here that will tell us that the
       element that we're putting first is smaller than the min of the result of
       the recursive call
+  - After some experimenting with assumptions, even assuming the post condition
+    right before the return in BB 4 still doesn't cause verification to work,
+    which suggests this may have something to do with the support if I
+    understand the meaning of of the post conditions correctly. I confirm this
+    by taking the file generated for that basic block and changing it to a
+    SupportlessPost condition, which with the assumption of the post condition
+    makes the verification go through very quickly, but when I remove the
+    assumption it still fails to verify.
+  - Playing around with it more, the issue seems to be that our pre conditions
+    don't say anything about the support of x and y being distinct meaning that
+    the recursive call could be messing with x, this still doesn't make BB 4/6
+    verifiable, but that's not unexpected at this point.

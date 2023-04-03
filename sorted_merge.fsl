@@ -29,7 +29,8 @@
 (Var tmp Loc)
 
 (Program sll_merge (x y oldkeysx oldkeysy ret))
-(Pre (and (Sorted x) (Sorted y)))
+(Pre (and (Sorted x) (Sorted y)
+          (= (SetIntersect (Sp (Sorted x)) (Sp (Sorted y))) EmptySetLoc)))
 (Post (and (Sorted ret) (= (Keys ret) (SetUnion oldkeysx oldkeysy))))
 
 (assume (= oldkeysx (Keys x)))
