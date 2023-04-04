@@ -103,3 +103,79 @@ Monday, April 3, 2023
   properly to split the list and get the support correct, but thinking through
   it it carefully and using the debug techniques I did earlier, this worked
   well, and the program is automatically verified.
+
+Tuesday, April 4, 2023
+* I now combine the two previous programs and a small new program to write
+  merge-sort. It takes quite a while to verify, specifically BB 17 (which is
+  the case that involves the recursive call and then the merge operation and
+  return) takes 37 minutes and fails to verify.
+  - I'm going to attempt to verify just that basic block with a weaker
+    condition, specifically we'll have it ignore support and only ask it to
+    show that the resulting list is sorted. Then, I'll add back that the list
+    should have the same keys as the original list.
+    + The first attempt (just that ret is sorted) is verified pretty much
+      instantly
+    + Adding the property about the keys makes verification take a little
+      longer, but it pretty quickly verifies it as well, meaning that the issue
+      is definitely related to supports.
+    + I next try it with a RelaxedPost rather than SupportlessPost to see what
+      happens this way, and it agains reports validity, which means that the
+      issue must be some part of the support that is not accounted for.
+    + Based on the other lemmas present, I decided to add two extra lemmas to
+      the file, one saying that for a Sorted list, the Support of it as a List
+      and as Sorted is the same, and one saying that for a List, the support of
+      the Keys and the List are the same. It appears to me that this second one
+      was essential as it is able to verify quickly when that is included but
+      not verify (at least quickly) when it is not.
+  - With the added lemma, the program fully verifies:
+    
+    BB  1. is valid ( 1.115 s)
+    + Merge function, x is nil case
+
+    BB  2. is valid ( 1.118 s)
+    + Merge function, y is nil case
+
+    BB  3. is valid ( 1.632 s)
+    + Merge function, key x <= key y case before recursive call
+
+    BB  4. is valid (13.863 s)
+    + Merge function, key x <= key y full case
+
+    BB  5. is valid ( 1.780 s)
+    + Merge function, key y <= key x case before recursive call
+
+    BB  6. is valid (15.208 s)
+    + Merge function, key y <= key x full case
+
+    BB  7. is valid ( 1.503 s)
+    + Split function, x is nil case
+
+    BB  8. is valid ( 2.457 s)
+    + Split function, next x is nil case
+
+    BB  9. is valid ( 5.073 s)
+    + Split function, x at least 2 elements case before the recursive call
+
+    BB 10. is valid (29.380 s)
+    + Split function, x at least 2 elements, full case
+
+    BB 11. is valid ( 0.879 s)
+    + Sort function, x is nill case
+
+    BB 12. is valid ( 1.270 s)
+    + Sort function, x has one element case
+
+    BB 13. is valid ( 0.464 s)
+    + Sort function, x at least 2 elements, up until split call
+
+    BB 14. is valid ( 0.521 s)
+    + Sort function, x at least 2 elements, up until first recursive call
+
+    BB 15. is valid ( 9.623 s)
+    + Sort function, x at least 2 elements, up until second recursive call
+
+    BB 16. is valid (19.401 s)
+    + Sort function, x at least 2 elements, up until merge call
+
+    BB 17. is valid (38.756 s)
+    + Sort function, x at least 2 elements, full case

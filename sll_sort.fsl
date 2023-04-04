@@ -1,0 +1,145 @@
+(Var x   Loc)
+(Var y   Loc)
+
+(Function next Loc Loc)
+(Function key  Loc Int)
+
+(Var plus_infty Int)
+(RecFunction Min Loc Int)
+(RecDef (Min x) (ite (= x nil) plus_infty (ite (< (key x) (Min (next x))) (key x) (Min (next x)))))
+
+(RecFunction List   Loc Bool)
+(RecFunction Keys   Loc SetInt)
+(RecFunction Sorted Loc Bool)
+
+(RecDef (List x) (ite (= x nil) True
+                      (and (List (next x))
+                           (not (IsMember x (Sp (List (antiSp (next x)))))))))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                 (SetAdd (Keys (next x)) (key x))))
+(RecDef (Sorted x) (ite (= x nil) True
+                      (and (Sorted (next x))
+                           (not (IsMember x (Sp (Sorted (antiSp (next x))))))
+                           (<= (key x) (Min (next x))))))
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
+(lemma (x) (=> (List x)   (= (SPKeys x) (SPList x))))
+
+(Var l1 Loc)
+(Var l2 Loc)
+(Var l3 Loc)
+(lemma (l1 l2 l3) (=> (= (Keys l3) (SetUnion (Keys l1) (Keys l2)))
+                      (ite (<= (Min l1) (Min l2)) (= (Min l3) (Min l1))
+                                                  (= (Min l3) (Min l2)))))
+
+(Var fst Loc)
+(Var snd Loc)
+(Var aux Loc)
+(Var tmp Loc)
+(Var tm1 Loc)
+(Var tm2 Loc)
+(Var rt1 Loc)
+(Var rt2 Loc)
+(Var ret Loc)
+(Var oldkeysx SetInt)
+(Var oldkeysy SetInt)
+(Var oldkeysaux SetInt)
+(Var oldkeysT1 SetInt)
+(Var oldkeysT2 SetInt)
+(Var oldkeysT3 SetInt)
+(Var oldkeysT4 SetInt)
+
+(Program sorted_merge (x y oldkeysx oldkeysy ret))
+(Pre (and (Sorted x) (Sorted y)
+          (= (SetIntersect (Sp (Sorted x)) (Sp (Sorted y))) EmptySetLoc)))
+(Post (and (Sorted ret) (= (Keys ret) (SetUnion oldkeysx oldkeysy))))
+
+(assume (= oldkeysx (Keys x)))
+(assume (= oldkeysy (Keys y)))
+
+(If (= x nil)
+ Then
+  (assign ret y)
+  (return)
+ Else
+  (If (= y nil)
+   Then
+    (assign ret x)
+    (return)
+   Else
+    (If (<= (key x) (key y))
+     Then
+      (assign aux (next x))
+      (assign oldkeysaux (Keys aux))
+      (call sorted_merge (aux y oldkeysaux oldkeysy tmp))
+      (assign (next x) tmp)
+      (assign ret x)
+      (return)
+     Else
+      (assign aux (next y))
+      (assign oldkeysaux (Keys aux))
+      (call sorted_merge (x aux oldkeysx oldkeysaux tmp))
+      (assign (next y) tmp)
+      (assign ret y)
+      (return)
+    )
+  )
+)
+
+(Program sll_split (x oldkeysx fst snd))
+(Pre (List x))
+(Post (and (List fst) (List snd) (= (SetUnion (Keys fst) (Keys snd)) oldkeysx)
+           (= (SetIntersect (Sp (List fst)) (Sp (List snd))) EmptySetLoc)))
+
+(assume (= oldkeysx (Keys x)))
+
+(If (= x nil)
+ Then
+  (assign fst x)
+  (assign snd x)
+  (return)
+ Else
+  (assign fst x)
+  (If (= (next x) nil)
+   Then
+    (assign snd (next x))
+    (return)
+   Else
+    (assign snd (next x))
+    (assign aux (next (next x)))
+    (assign oldkeysaux (Keys aux))
+    (call sll_split (aux oldkeysaux rt1 rt2))
+    (assign (next fst) rt1)
+    (assign (next snd) rt2)
+    (return)
+  )
+)
+
+(Program sll_sort (x oldkeysx ret))
+(Pre (List x))
+(Post (and (Sorted ret) (= (Keys ret) oldkeysx)))
+
+(assume (= oldkeysx (Keys x)))
+
+(If (= x nil)
+ Then /* empty list */
+  (assign ret x)
+  (return)
+ Else
+  (If (= (next x) nil)
+   Then /* singleton list */
+    (assign ret x)
+    (return)
+   Else /* List of length >= 2 */
+    (call sll_split (x oldkeysx rt1 rt2))
+    (assign oldkeysT1 (Keys rt1))
+    (call sll_sort (rt1 oldkeysT1 tm1))
+    (assign oldkeysT2 (Keys rt2))
+    (call sll_sort (rt2 oldkeysT2 tm2))
+    (assign oldkeysT3 (Keys tm1))
+    (assign oldkeysT4 (Keys tm2))
+    (call sorted_merge (tm1 tm2 oldkeysT3 oldkeysT4 ret))
+    (return)
+  )
+)
