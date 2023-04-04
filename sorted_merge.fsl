@@ -57,14 +57,14 @@
      Then
       (assign aux (next x))
       (assign oldkeysaux (Keys aux))
-      (call sll_merge (aux y oldkeysaux oldkeysy tmp))
+      (call sorted_merge (aux y oldkeysaux oldkeysy tmp))
       (assign (next x) tmp)
       (assign ret x)
       (return)
      Else
       (assign aux (next y))
       (assign oldkeysaux (Keys aux))
-      (call sll_merge (x aux oldkeysx oldkeysaux tmp))
+      (call sorted_merge (x aux oldkeysx oldkeysaux tmp))
       (assign (next y) tmp)
       (assign ret y)
       (return)
