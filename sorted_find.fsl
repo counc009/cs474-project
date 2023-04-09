@@ -22,15 +22,15 @@
 (lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
 
 (Var ret Bool)
-(Var oldkeysl SetInt)
+(Var oldkeysx SetInt)
 (Var aux Loc)
 (Var auxkeys SetInt)
 
-(Program sorted_find (x oldkeysl k ret))
-(Pre (and (Sorted x) (= (Keys x) oldkeysl)))
-(Post (and (Sorted x) (= (Keys x) oldkeysl)
-           (=> (= ret True) (IsMember k oldkeysl))
-           (=> (IsMember k oldkeysl) (= ret True))))
+(Program sorted_find (x oldkeysx k ret))
+(Pre (and (Sorted x) (= (Keys x) oldkeysx)))
+(Post (and (Sorted x) (= (Keys x) oldkeysx)
+           (=> (= ret True) (IsMember k oldkeysx))
+           (=> (IsMember k oldkeysx) (= ret True))))
 
 (If (= x nil)
  Then
