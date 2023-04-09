@@ -179,3 +179,17 @@ Tuesday, April 4, 2023
 
     BB 17. is valid (38.756 s)
     + Sort function, x at least 2 elements, full case
+
+Saturday, April 8, 2023
+* I downloaded the sll-find.dryad.c file from VCDryad examples to begin porting
+  some benchmarks from that dataset into FL.
+  - The definitions of sll and keys in the VCDryad code are very similar to
+    those from other sll examples in FL, so I'm simply going to keep using
+    those (List and Keys).
+  - The post condition I used is based on the one from the example, but we
+    break the <=> into a => and a <= case.
+  - I put the condition that Keys x = oldkeysx into the precondition because I
+    think I prefer that style to the assumption one I had previously been using
+  - The verification went through immediately (all 4 basic blocks are valid, in
+    less than 3 seconds total)
+
