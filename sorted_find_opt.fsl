@@ -21,7 +21,7 @@
 (lemma (x) (< (key x) plus_infty))
 (lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
 
-/*(lemma (x) (=> (> (Min x) k) (IsMember k (Keys x))))*/
+(lemma (x) (=> (> (Min x) k) (not (IsMember k (Keys x)))))
 
 (Var ret Bool)
 (Var oldkeysx SetInt)

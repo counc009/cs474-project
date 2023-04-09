@@ -239,12 +239,7 @@ Sunday, April 9, 2023
       because I want to write something about k which has type Int, so I'm
       getting an error about 'variables [...] must be of the foreground sort'
     + Just ommiting k from the binding appears to resolve this and allows the
-      program to verify, but it turns out that this is definitely some kind of
-      bug because I'm able to get it to verify contradictions (like k in
-      oldkeysx and k not in oldkeysx)
-    + Going to email Adithya about if there's a way to write a lemma involving
-      an Int, and mention that there seems to be some sort of bug with using
-      unbound variables in a lemma.
+      program to verify.
 * Now, moving on to sorted\_insert.dryad.c
   - The pre/post conditions are straightforward.
   - There are 4 basic blocks: 1. x = nil, 2. k > key x before recursive call,
@@ -253,6 +248,5 @@ Sunday, April 9, 2023
     that surprised, I suspect it will need some sort of lemma.
   - I'm able to verify the piece of the post condition about the keys, so the
     issue is clearly about saying that ret is Sorted.
-  - What I'd like to be able to say is that if (Keys l1) = (SetAdd (Keys l2) k)
-    then (Min l1) = (Min l2) or k, but again that requires a lemma that
-    involves an Int.
+  - The lemma I add is that if (Keys l1) = (SetAdd (Keys l2) k) then
+    (Min l1) = (Min l2) or k, and the program is then able to verify

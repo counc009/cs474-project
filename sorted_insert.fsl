@@ -23,10 +23,10 @@
 
 (Var l1 Loc)
 (Var l2 Loc)
-(lemma (l1 l2 k) (=> (= (Keys l1) (SetAdd (Keys l2) k))
-                     (ite (< k (Min l1))
-                          (= (Min l1) k)
-                          (= (Min l1) (Min l2)))))
+(lemma (l1 l2) (=> (= (Keys l1) (SetAdd (Keys l2) k))
+                   (ite (< k (Min l1))
+                        (= (Min l1) k)
+                        (= (Min l1) (Min l2)))))
 
 (Var ret Loc)
 (Var oldkeysx SetInt)
