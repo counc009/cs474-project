@@ -217,3 +217,31 @@ Saturday, April 8, 2023
     + The whole thing is fixed by adding the lemma about SPKeys = SPList, and
       it now verifies is less than 3.5 seconds.
 
+Sunday, April 9, 2023
+* Given that I implemented find and insert on singly linked lists yesterday, I
+  decide to attempt to implement and verify find and insert on sorted lists. I
+  start with sorted\_find.dryad.c
+  - I'm going to continue using the definition of Sorted from within the FOSSIL
+    repo, the definition in the file relies on a `lt-set` operation that I
+    don't believe exists in this tool.
+  - I've specified the post condition basically the same as in that file and
+    just added a (Keys x) = oldkeysx precondition.
+  - There are 4 basic blocks (x = nil, key x = k, recursive case before the
+    recursive call, and the full recursive case). All verify immediately.
+  - NOTE: This is a really bad implementation of find on a sorted list, there's
+    no reason to keep searching once (key x) > k. I'm going to try to implement
+    a version like that in sorted\_find\_opt.fsl.
+    + Everything but the extra basic block verifies immediately, but not the
+      extra basic block.
+    + I'm going to try adding a simple lemma, that if k > Min x then k is not
+      an element of Keys x.
+    + I'm not able to write the lemma I want, at least on my first attempt,
+      because I want to write something about k which has type Int, so I'm
+      getting an error about 'variables [...] must be of the foreground sort'
+    + Just ommiting k from the binding appears to resolve this and allows the
+      program to verify, but it turns out that this is definitely some kind of
+      bug because I'm able to get it to verify contradictions (like k in
+      oldkeysx and k not in oldkeysx)
+    + Going to email Adithya about if there's a way to write a lemma involving
+      an Int, and mention that there seems to be some sort of bug with using
+      unbound variables in a lemma.
