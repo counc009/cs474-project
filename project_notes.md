@@ -192,4 +192,28 @@ Saturday, April 8, 2023
     think I prefer that style to the assumption one I had previously been using
   - The verification went through immediately (all 4 basic blocks are valid, in
     less than 3 seconds total)
+* I next downloaded sll-insert-back.dryad.c
+  - Again, going to use the previous definition of List and Keys
+  - Going to need to use alloc since this requires malloc in the original code
+  - In my first attempt, BB 1 and 3 fail to verify (1 is x = nil case, 3 is
+    everything in the recursive case)
+    + Continue with the procedure I've been using, of weakening the post
+      condition on a basic block on its own to see what issues are preventing
+      the verification
+    + For BB 1, I simply have to add an assumption that ret (which is alloc'd)
+      is not nil; I saw this in some other code and in the VCDryad code
+    + For BB 3, changing it to a SupportlessPost doesn't make it verify, and is
+      not even able to verify that ret is a list. When I assign next x = tmp,
+      that breaks its ability to verify even just that tmp is a list. The issue
+      it seems must be that it is unable to verify (after the recursive call)
+      that x isn't in the support of tmp (which indeed I tested and it wasn't
+      able to verify that).
+    + I added an assumption after the call to say that x is not in the support
+      of tmp, and then after the assignment to next x, it is able to verify
+      a SupportlessPost that List ret. It is not able to prove this for a
+      RelaxedPost, or anything about the keys of ret (and in fact it is not
+      able to prove after the assignment to next x that k is in the keys of x.
+      It seems to think the assignment to next x may change the keys of tmp.
+    + The whole thing is fixed by adding the lemma about SPKeys = SPList, and
+      it now verifies is less than 3.5 seconds.
 
