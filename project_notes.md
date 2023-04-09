@@ -212,7 +212,7 @@ Saturday, April 8, 2023
       of tmp, and then after the assignment to next x, it is able to verify
       a SupportlessPost that List ret. It is not able to prove this for a
       RelaxedPost, or anything about the keys of ret (and in fact it is not
-      able to prove after the assignment to next x that k is in the keys of x.
+      able to prove after the assignment to next x that k is in the keys of x).
       It seems to think the assignment to next x may change the keys of tmp.
     + The whole thing is fixed by adding the lemma about SPKeys = SPList, and
       it now verifies is less than 3.5 seconds.
@@ -245,3 +245,14 @@ Sunday, April 9, 2023
     + Going to email Adithya about if there's a way to write a lemma involving
       an Int, and mention that there seems to be some sort of bug with using
       unbound variables in a lemma.
+* Now, moving on to sorted\_insert.dryad.c
+  - The pre/post conditions are straightforward.
+  - There are 4 basic blocks: 1. x = nil, 2. k > key x before recursive call,
+    3. full k > key x case 4. k <= key x
+  - Basics blocks 1, 2, and 4 all verify, but basic block 3 does not. I'm not
+    that surprised, I suspect it will need some sort of lemma.
+  - I'm able to verify the piece of the post condition about the keys, so the
+    issue is clearly about saying that ret is Sorted.
+  - What I'd like to be able to say is that if (Keys l1) = (SetAdd (Keys l2) k)
+    then (Min l1) = (Min l2) or k, but again that requires a lemma that
+    involves an Int.
