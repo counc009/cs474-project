@@ -349,3 +349,32 @@ Saturday, April 15, 2023
     `(ite True True (= (next (next ret)) (next (next ret))))`
   just to make sure the term in included, but this is clearly a tautology.
   The program is now able to be verified entirely.
+* Picking a slightly more complicated (from the conditions at least) example
+  using doubly-linked lists, I'm using dll-mid-delete.dryad.c.
+  - Just going to automatically add a RevDLL and RevKeys support lemma
+  - BB 4 (v = nil and u = nil) automatically verifies, but the others do not,
+    immediate thoughts are that it must have to do with the supports.
+  - Exploring BB 3 (where v = nil and u =/= nil), the issue (after the
+    assignment to next u) is not proving RevDLL u, but proving that the RevKeys
+    of u is still the same.
+    + My definition of RevDLL was wrong, and now its not able to prove RevDLL u
+  - It is able to prove that prev(u) is a RevDLL.
+  - It is able to prove that prev(u) = nil or next(prev(u)) = u
+  - Another weird situation where it can prove u is a RevDLL iff we include
+    that prev(u) is a RevDLL.
+  - Adding (RevDLL (prev u)) to the final post condition, it is able to verify
+    it as an UnsupportedPost, but not as RelaxedPost or Post.
+    + This is resolved by adding to the precondition that p is not in the
+      support of either u or v.
+  - Adding that p is no in the support of u or v and a tautology involving
+    (prev u) to the post condition, then BB 3 and 4 can verify.
+  - Just assuming a similar issue, going to add a tautology involving (next v)
+    now BB 2, 3, and 4 all can verify.
+  - In BB 1, after the assignment to prev(v) it can prove v is a DLL, but not
+    that u is a RevDLL. I'm assuming this has to do with support again. Adding
+    an assumption that v is not in the support of u then it is able to prove
+    that u is a RevDLL
+  - After the assignment to (next u) it is not able to verify that RevDLL u,
+    but adding that u is not in the support of v allows the verification. And,
+    it then the post condition for the BB follows.
+  - Adding these to the pre-condition, all four basic blocks verify
