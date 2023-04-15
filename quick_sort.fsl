@@ -1,0 +1,131 @@
+(Var x   Loc)
+
+(Function next Loc Loc)
+(Function key  Loc Int)
+
+(Var plus_infty Int)
+(RecFunction Min Loc Int)
+(RecDef (Min x) (ite (= x nil) plus_infty (ite (< (key x) (Min (next x))) (key x) (Min (next x)))))
+
+(Var minus_infty Int)
+(RecFunction Max Loc Int)
+(RecDef (Max x) (ite (= x nil) minus_infty (ite (> (key x) (Max (next x))) (key x) (Max (next x)))))
+
+(RecFunction List   Loc Bool)
+(RecFunction Keys   Loc SetInt)
+(RecFunction Sorted Loc Bool)
+
+(RecDef (List x) (ite (= x nil) True
+                      (and (List (next x))
+                           (not (IsMember x (Sp (List (antiSp (next x)))))))))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                 (SetAdd (Keys (next x)) (key x))))
+(RecDef (Sorted x) (ite (= x nil) True
+                      (and (Sorted (next x))
+                           (not (IsMember x (Sp (Sorted (antiSp (next x))))))
+                           (<= (key x) (Min (next x))))))
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (> (key x) minus_infty))
+(lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
+(lemma (x) (=> (List x)   (= (SPKeys x) (SPList x))))
+
+(Var y Loc)
+(Var z Loc)
+(lemma (x y) (=> (and (not (= x nil)) (<= (Max x) (Min y)))
+                 (<= (Min x) (Min y))))
+(lemma (x y z) (=> (= (Keys z) (SetUnion (Keys x) (Keys y)))
+                   (ite (<= (Min x) (Min y)) (= (Min z) (Min x))
+                                             (= (Min z) (Min y)))))
+
+(Var oldkeysx SetInt)
+(Var cur Loc)
+(Var curkeys SetInt)
+(Var pivot Int)
+(Var lpt Loc)
+(Var rpt Loc)
+(Var tmp Loc)
+(Var aux Loc)
+(Var auxkeys SetInt)
+(Var tmpkeys SetInt)
+(Var t1 Loc)
+(Var t2 Loc)
+(Var leftkeys SetInt)
+(Var rightkeys SetInt)
+(Var ret Loc)
+
+(Program concat_sorted (t1 leftkeys t2 rightkeys ret))
+(Pre (and (Sorted t1) (Sorted t2) (= leftkeys (Keys t1)) (= rightkeys (Keys t2))
+          (<= (Max t1) (Min t2))))
+(Post (and (Sorted ret) (= (Keys ret) (SetUnion leftkeys rightkeys))))
+
+(If (= t1 nil)
+ Then
+  (assign ret t2)
+  (return)
+ Else
+  (assign aux (next t1))
+  (assign auxkeys (Keys aux))
+  (call concat_sorted (aux auxkeys t2 rightkeys tmp))
+  (assign (next t1) tmp)
+  (assign ret t1)
+  (return)
+)
+
+(Program partition (cur oldkeysx pivot lpt rpt))
+(Pre (and (List cur) (List lpt) (List rpt)
+          (<= (Max lpt) pivot) (<= pivot (Min rpt))
+          (= oldkeysx (SetAdd (SetUnion (Keys cur)
+                        (SetUnion (Keys lpt) (Keys rpt))) pivot))))
+(Post (and (List lpt) (List rpt) (<= (Max lpt) pivot) (<= pivot (Min rpt))
+           (= oldkeysx (SetAdd (SetUnion (Keys lpt) (Keys rpt)) pivot))))
+
+(If (= cur nil)
+ Then
+  (return)
+ Else
+  (assign tmp (next cur))
+  (If (<= (key cur) pivot)
+   Then
+    (assign (next cur) lpt)
+    (assign lpt cur)
+   Else
+    (assign (next cur) rpt)
+    (assign rpt cur)
+  )
+  (call partition (tmp oldkeysx pivot lpt rpt))
+  (return)
+)
+
+(Program quick_sort (x oldkeysx ret))
+(Pre (and (List x) (= (Keys x) oldkeysx)))
+(Post (and (Sorted ret) (= (Keys ret) oldkeysx)))
+
+(If (= x nil)
+ Then
+  (assign ret x)
+  (return)
+ Else
+  (assign cur (next x))
+  (assign pivot (key x))
+  (assign (next x) nil)
+  (assign lpt nil)
+  (assign rpt nil)
+
+  (call partition (cur oldkeysx pivot lpt rpt))
+
+  (assign (next x) rpt)
+  (assign rightkeys (Keys x))
+  (call quick_sort (x rightkeys t2))
+
+  (If (= lpt nil)
+   Then
+    (assign ret t2)
+    (return)
+   Else
+    (assign leftkeys (Keys lpt))
+    (call quick_sort (lpt leftkeys t1))
+    (call concat_sorted (t2 leftkeys t1 rightkeys ret))
+    (return)
+  )
+)
