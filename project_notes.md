@@ -250,3 +250,94 @@ Sunday, April 9, 2023
     issue is clearly about saying that ret is Sorted.
   - The lemma I add is that if (Keys l1) = (SetAdd (Keys l2) k) then
     (Min l1) = (Min l2) or k, and the program is then able to verify
+* Next, let's try quick\_sort.dryad.c, I'll immediately note that the program
+  on the VCDryad examples page uses a loop for the partitioning piece, but I'll
+  use another recursive function for this instead.
+  - The base code has a statement that the keys of lpt are all less than or
+    equal to the pivot and that all the keys of rpt are greater than or equal
+    to the pivot. Since we don't have the ability to directly express that in
+    Frame Logic, I'll use Min and a similarly defined Max.
+  - I've defined a partition function, following along very similarly with its
+    pre/post conditions to the loop invariant in the original
+  - I've also decided to define the concat\_sorted function, and actually to
+    have it use the fact that Max t1 <= Min t2 to speed up the concat (we only
+    need to traverse to the end of t1)
+  - There are going to be a bunch of issues of my formalization of everything
+    and just my implementation, so I'm manually going through BB by BB
+    (especially since currently bbverify gets run in glob order, not any
+    sensible order). My first attempt, especially, caused a bunch of internal
+    errors but I think some of that was issues in the code
+  - Starting with contact\_sorted, the first 2 basic blocks verify and the 3rd
+    does not (after nearly 10 minutes it finally fails). It seems likely that
+    we need two lemmas: first, the previous lemma that the min of merging two
+    lists is the min of their mins. Secondly, we need some lemma that says
+    that Min l <= Max l. After some quick experiments, it turns out that only
+    this second lemma is needed (and verification works faster with only it)
+
+Thursday, April 13, 2023
+* I was noticing some issues where things that I didn't expect to verify were
+  being verified and there seemed actually to be bugs, but I realized that the
+  lemma I introduced was was, I have modified it so that that if x is a list
+  and non-nil then Min x <= Max x. I decided to also add the previous lemma
+  about min of two merged lists and a similar one about the max of such lists.
+  - That was running trying to verify BB 3 for over an hour and didn't manage
+    it, so I'm going to go back and analyze what it is and isn't able to prove
+    without these lemmas
+  - The first issue I run into is that after the recursive call it is unable
+    to verify that t1 not in the support of tmp (the return from the recursive
+    call). It is also not able to prove that the key of t1 (the list we're
+    walking through) is less than the min of tmp. Both of these need to be
+    solved to prove the return value is a sorted list.
+  - Going to try bringing back a lemma that notes that if we have three lists
+    l1, l2, and l3 and the keys of l3 are the union of the keys of l1 and l2
+    and Min l1 <= Min l2, then Min l3 = Min l1. In theory, I think this should
+    be sufficient to prove (key t1) <= (Min tmp). We also need to add a lemma
+    that If Max x <= Min y then Min x <= Min y, and then that part can be
+    verified.
+  - It seems to me that the thing we need to change to prove the support piece
+    is that the two input lists are disjoint (i.e. have disjoint supports)
+  - It is now saying that t1 is not a member of the support of tmp, which I
+    didn't expect since I haven't added anything relating to support... It is
+    able to verify contradictions so that must mean the lemmas are inconsistant
+  - So, the lemma (Max x <= Min y) => (Min x <= Min y) is, on its own,
+    contradictory apparently. I'm assuming the issue has to do with empty lists.
+    After a bunch of experiments, I've settled on two lemmas that allows it
+    to verify that (key t1) <= (Min tmp). The first is that if x is not nil
+    and Max x <= Min y then Min x <= Min y. The second is then the lemma that
+    if some list z's keys is the union of the keys of x and y then the min of
+    z is either the min of x or the min y of (whichever is smaller). These
+    lemmas seem to be consistant and allow the system to verify
+    (key t1) <= (Min tmp).
+  - So, the next (hopefully last) piece to prove is that t1 is not a member of
+    the support of tmp. I'm going to try to check that this is the last thing
+    we need by adding an assumption of it right after the function call and
+    seeing if the final post condition will verify (it won't).
+* Simultaneously to working on Quick Sort, I'm also going to start working on
+  some DLL examples, specifically append and insert-back
+  - Here, I wrote the definition of DLL by hand, following that in the dryad
+    file and basing it also loosely on how the List recursive definition was
+    defined in the examples.
+  - I start with the file `dll_tests.fsl` which just shows an attempt to
+    construct some doubly-linked lists to make sure that the definitions seem
+    to work at least vaguely.
+  - Then, working on `dll_insert_back.fsl` based on `dll-insert-back.dryad.c`.
+    On the first attempt, BB 1 and 2 verify automatically but the third one
+    (which is the full case where x =/= nil) does not.
+
+Friday, April 14, 2023
+* Adding a lemma about (DLL x) => (= (Sp (DLL x)) (Sp (Keys x))), like we've
+  had elsewhere still does not allow BB 3 to verify (this is dll\_insert\_back)
+  but it does fail to verify much quicker (4s instead of 33s).
+  - Without the lemma, however, it is not able to verify that x is not a member
+    of the support of (DLL tmp), directly after the function call.
+  - The assignment to prev tmp seems to break the ability to prove the
+    properties that will be necessary to prove x is a DLL.
+  - It is no longer able to prove tmp is a DLL. Somehow it is no longer able to
+    verify that (prev (next tmp)) = tmp. However, before the assignment it is
+    able to prove that (next tmp) =/= tmp and is still able to verify this
+    after the assignment to prev tmp.
+  - For some reason, the post condition cannot be verified, but if I add
+    (DLL (next (next ret))) to the and in the post condition, and it is able to
+    verify it.
+  - If I add an assume right before the return and just assume
+    (DLL (next (next ret))) then everything is able to verify automatically.

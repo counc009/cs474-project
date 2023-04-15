@@ -1,0 +1,62 @@
+(Var x Loc)
+
+(Function next Loc Loc)
+(Function prev Loc Loc)
+(Function key  Loc Int)
+
+(RecFunction DLL  Loc Bool)
+(RecFunction Keys Loc SetInt)
+
+(RecDef (DLL  x) (ite (= x nil) True
+                 (ite (= (next x) nil) True
+                    (and (= x (prev (next x)))
+                         (DLL (next x))
+                         (not (IsMember x (Sp (DLL (antiSp (next x))))))))))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                    (SetAdd (Keys (next x)) (key x))))
+
+(Var a Int)
+(Var b Int)
+(Var c Int)
+(Var k Int)
+(Var ret Loc)
+(Var tmp Loc)
+
+(Program empty_dll (ret))
+(Pre (= ret ret))
+(Post (DLL ret))
+
+(assign ret nil)
+(return)
+
+(Program singleton_dll (k ret))
+(Pre (= ret ret))
+(Post (and (DLL ret) (= (Keys ret) (SetAdd EmptySetInt k))))
+
+(alloc ret)
+(assume (not (= ret nil)))
+(assign (key ret) k)
+(assign (prev ret) nil)
+(assign (next ret) nil)
+(return)
+
+(Program triplet_dll (a b c ret))
+(Pre (= ret ret))
+(Post (and (DLL ret) (= (Keys ret) (SetAdd (SetAdd (SetAdd EmptySetInt a) b) c))))
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) c)
+(assign (next tmp) nil)
+(alloc ret)
+(assume (not (= ret nil)))
+(assign (key ret) b)
+(assign (next ret) tmp)
+(assign (prev tmp) ret)
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) a)
+(assign (next tmp) ret)
+(assign (prev ret) tmp)
+(assign ret tmp)
+(return)
