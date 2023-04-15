@@ -341,3 +341,11 @@ Friday, April 14, 2023
     verify it.
   - If I add an assume right before the return and just assume
     (DLL (next (next ret))) then everything is able to verify automatically.
+
+Saturday, April 15, 2023
+* Based on advice from Madhu and Adithya, adding the term (next (next ret))
+  to the post condition so that it is instantiated and explored in the
+  verification. After other experiments, settled on
+    `(ite True True (= (next (next ret)) (next (next ret))))`
+  just to make sure the term in included, but this is clearly a tautology.
+  The program is now able to be verified entirely.

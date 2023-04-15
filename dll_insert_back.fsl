@@ -26,7 +26,8 @@
 
 (Program dll_insert_back (x oldkeysx k ret))
 (Pre (and (DLL x) (= (Keys x) oldkeysx)))
-(Post (and (DLL ret) (= (Keys ret) (SetAdd oldkeysx k))))
+(Post (and (ite True True (= (next (next ret)) (next (next ret))))
+           (DLL ret) (= (Keys ret) (SetAdd oldkeysx k))))
 
 (If (= x nil)
  Then
@@ -44,6 +45,5 @@
   (assign (next x) tmp)
   (assign (prev tmp) x)
   (assign ret x)
-  (assume (DLL (next (next ret))))
   (return)
 )
