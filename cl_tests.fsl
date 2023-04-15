@@ -1,0 +1,71 @@
+(Function next Loc Loc)
+(Function key  Loc Int)
+
+(RecFunction Lseg Loc Loc Bool)
+(RecFunction Circ Loc Bool)
+(RecFunction CKys Loc Loc SetInt)
+(RecFunction Keys Loc SetInt)
+
+(Var x Loc)
+(Var y Loc)
+
+(RecDef (Lseg x y) (ite (= x y) True
+                   (ite (= x nil) False
+                        (Lseg (next x) y))))
+(RecDef (Circ x) (ite (= x nil) True
+                      (Lseg (next x) x)))
+
+(RecDef (CKys x y) (ite (= x y) (SetAdd EmptySetInt (key x))
+                        (SetAdd (CKys (next x) y) (key x))))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                      (CKys (next x) x)))
+
+(Var ret Loc)
+(Var k Int)
+
+(Var tmp  Loc)
+(Var tail Loc)
+(Var a Int)
+(Var b Int)
+(Var c Int)
+
+(Program empty_cl (ret))
+(Pre True)
+(Post (Circ ret))
+
+(assign ret nil)
+(return)
+
+(Program singleton_cl (k ret))
+(Pre True)
+(Post (and (Circ ret) (= (Keys ret) (SetAdd EmptySetInt k))))
+
+(alloc ret)
+(assume (not (= ret nil)))
+(assign (key ret) k)
+(assign (next ret) ret)
+(return)
+
+(Program triplet_cl (a b c ret))
+(Pre True)
+(Post (and (Circ ret) (= (Keys ret) (SetAdd (SetAdd (SetAdd EmptySetInt a) b) c))))
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) a)
+(assign tail tmp)
+(assign ret tmp)
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) b)
+(assign (next tail) tmp)
+(assign tail tmp)
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) c)
+(assign (next tail) tmp)
+(assign (next tmp) ret)
+
+(return)

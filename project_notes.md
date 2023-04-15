@@ -378,3 +378,16 @@ Saturday, April 15, 2023
     but adding that u is not in the support of v allows the verification. And,
     it then the post condition for the BB follows.
   - Adding these to the pre-condition, all four basic blocks verify
+* Having verified 2 DLL programs, I'm going to move on to circular lists, I'll
+  do delete back and insert front.
+  - The definitions of circular lists given in the VCDryad examples are very
+    limited, they don't state the circular list condition explicitly or say
+    anything about the keys. I'm trying to implement conditions that are more
+    detailed.
+    + I implement Circ to define circular lists by saying that nil is a
+      circular list and a non-nil is x a circular list if next(x) reaches x
+      by a chain of x.
+    + Similarly to this, I can define the set of keys for a circular list.
+  - For insert front, had to add a case for x = nil, and this case verifies
+    immediately. The second BB (non nil x), verification is running for a long
+    time.
