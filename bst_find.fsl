@@ -1,0 +1,75 @@
+(Function key   Loc Int)
+(Function left  Loc Loc)
+(Function right Loc Loc)
+
+(RecFunction Min  Loc Int)
+(RecFunction Max  Loc Int)
+(Var plus_infty Int)
+(Var minus_infty Int)
+
+(RecFunction BST  Loc Bool)
+(RecFunction Keys Loc SetInt)
+
+(Var x Loc)
+
+(RecDef (Min x) (ite (= x nil) plus_infty
+                (ite (= (left x) nil) (key x)
+                     (Min (left x)))))
+(RecDef (Max x) (ite (= x nil) minus_infty
+                (ite (= (right x) nil) (key x)
+                     (Max (right x)))))
+
+(RecDef (BST x) (ite (= x nil) True
+                     (and (BST (left x))  (< (Max (left x)) (key x))
+                          (BST (right x)) (< (key x) (Min (right x)))
+                          (not (IsMember x (Sp (BST (antiSp (left x))))))
+                          (not (IsMember x (Sp (BST (antiSp (right x)))))) )))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                      (SetAdd (SetUnion (Keys (left x)) (Keys (right x)))
+                              (key x))))
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (< minus_infty (key x)))
+(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (Keys x)))))
+
+(Var k Int)
+(lemma (x) (=> (> (Min x) k) (not (IsMember k (Keys x)))))
+(lemma (x) (=> (< (Max x) k) (not (IsMember k (Keys x)))))
+
+(Var ret Bool)
+(Var oldkeysx SetInt)
+(Var tmp Loc)
+(Var tmpkeys SetInt)
+
+(Program bst_find_rec (x oldkeysx k ret))
+(Pre (and (BST x) (= (Keys x) oldkeysx)))
+(Post (and (BST x) (= (Keys x) oldkeysx)
+           (=> (= ret True) (IsMember k oldkeysx))
+           (=> (IsMember k oldkeysx) (= ret True))
+           (ite True True (= (right x) (right x)))
+           (ite True True (= (left x) (left x))) ))
+
+(If (= x nil)
+ Then
+  (assign ret False)
+  (return)
+ Else
+  (If (= k (key x))
+   Then
+    (assign ret True)
+    (return)
+   Else
+    (If (< k (key x))
+     Then
+      (assign tmp (left x))
+      (assign tmpkeys (Keys tmp))
+      (call bst_find_rec (tmp tmpkeys k ret))
+      (return)
+     Else
+      (assign tmp (right x))
+      (assign tmpkeys (Keys tmp))
+      (call bst_find_rec (tmp tmpkeys k ret))
+      (return)
+    )
+  )
+)

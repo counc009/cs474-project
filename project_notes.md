@@ -416,3 +416,25 @@ Monday, April 17, 2023
 * For some reason using the insert\_node as a helper didn't work, but just
   merging them together into a single function does work and the program is
   able to verify.
+* I don't find the formalization of delete\_back very good, so actually going
+  to skip that (at least for now).
+* Moving on to binary search trees, I'm going to do insert, delete, and find.
+  Starting with find as it is the shortest and appears simplest.
+  - Going to define Min/Max functions like in Sorted to allow us to express the
+    sorting property in BST (the definitions in VCDryad use set operations that
+    don't exist in FL).
+  - Also stating the correctness for find as the iff I used previously with
+    find.
+  - First run at verification verifies BB 1 (x = nil), BB 2 (key(x) = k), BB 3
+    (pre-condition of recursive call on left(x)), and BB 5 (pre-condition of
+    recursive call on right(x)). BB 4/6 (full cases in left/right recurse) fail
+    + My assumption is that it can't verify that k is not in the other subtree.
+  - I'm going to add the same lemma I used in the optimized sorted find, with a
+    version for max as well.
+  - 4 and 6 are still failing to verify, going to look into 4 in more detail.
+    + The issue in 4 actually seems to be the problem about needing a certain
+      term, specifically it appears to be right(x) here.
+    + I'm going to assume the same issue is appearing in BB 6 and will add left
+      and right of x to the post condition in a tautology
+  - It now fully verifies.
+* Moving next to insert
