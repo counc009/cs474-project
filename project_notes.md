@@ -390,4 +390,29 @@ Saturday, April 15, 2023
     + Similarly to this, I can define the set of keys for a circular list.
   - For insert front, had to add a case for x = nil, and this case verifies
     immediately. The second BB (non nil x), verification is running for a long
-    time.
+    time (it was only 15 minutes before I killed it, but I wanted to analyze
+    it more in depth).
+  - The assignment to key(ret) seems to break the ability to verify
+    Lseg(tmp, x)
+
+Sunday, April 16, 2023
+* Spending a good deal of time trying to figure out how to express circular
+  lists in a way that lets insert work.
+  - I decided to try using a version where the node to insert is provided so
+    that we don't have to deal with the alloc, which seemed like it may have
+    been an issue yesterday.
+  - Still having issues with the assignment to next(x), which suggests that the
+    system can't prove that changing next(x) which has to be support related.
+  - After some experiments, found I can just say that x is not an element of
+    the support of Lseg(next(x), x)
+  - Again, I'm finding that I need a tautology involving next(next(ret))
+  - Added a lemma about the relation of the support of Lseg and CKys and now
+    both BB can verify.
+  - Trying to use this as a helper function, though, still the verification
+    still won't work, specifically it can verify the post condition as a
+    RelaxedPost, but not as a full Post, so the issue has to do with support.
+
+Monday, April 17, 2023
+* For some reason using the insert\_node as a helper didn't work, but just
+  merging them together into a single function does work and the program is
+  able to verify.

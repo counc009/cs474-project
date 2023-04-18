@@ -13,12 +13,15 @@
                    (ite (= x nil) False
                         (Lseg (next x) y))))
 (RecDef (Circ x) (ite (= x nil) True
-                      (Lseg (next x) x)))
+                 (and (Lseg (next x) x)
+                      (not (IsMember x (Sp (Lseg (antiSp (next x)) (antiSp x))))) )))
 
 (RecDef (CKys x y) (ite (= x y) (SetAdd EmptySetInt (key x))
                         (SetAdd (CKys (next x) y) (key x))))
 (RecDef (Keys x) (ite (= x nil) EmptySetInt
                       (CKys (next x) x)))
+
+(lemma (x y) (=> (Lseg x y) (= (Sp (Lseg x y)) (Sp (CKys x y)))))
 
 (Var ret Loc)
 (Var k Int)
@@ -46,6 +49,22 @@
 (assign (next ret) ret)
 (return)
 
+(Program pair_cl (a b ret))
+(Pre True)
+(Post (and (Circ ret) (= (Keys ret) (SetAdd (SetAdd EmptySetInt a) b))))
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) a)
+
+(alloc ret)
+(assume (not (= ret nil)))
+(assign (key ret) b)
+
+(assign (next ret) tmp)
+(assign (next tmp) ret)
+(return)
+
 (Program triplet_cl (a b c ret))
 (Pre True)
 (Post (and (Circ ret) (= (Keys ret) (SetAdd (SetAdd (SetAdd EmptySetInt a) b) c))))
@@ -65,6 +84,37 @@
 (alloc tmp)
 (assume (not (= tmp nil)))
 (assign (key tmp) c)
+(assign (next tail) tmp)
+(assign (next tmp) ret)
+
+(return)
+
+(Program quad_cl (a b c k ret))
+(Pre True)
+(Post (and (Circ ret)
+  (= (Keys ret) (SetAdd (SetAdd (SetAdd (SetAdd EmptySetInt a) b) c) k)) ))
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) a)
+(assign tail tmp)
+(assign ret tmp)
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) b)
+(assign (next tail) tmp)
+(assign tail tmp)
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) c)
+(assign (next tail) tmp)
+(assign tail tmp)
+
+(alloc tmp)
+(assume (not (= tmp nil)))
+(assign (key tmp) k)
 (assign (next tail) tmp)
 (assign (next tmp) ret)
 
