@@ -485,3 +485,17 @@ Thursday, April 20, 2023
   - One thing to note here, I had weird issued because I had assigned next x
     to nil in the main function, removing this (it had no real purpose) made
     several things suddenly be able to be verified.
+* I was going to move on to red-black trees, but I have a bunch of questions
+  about the implementation in VCDryad, and I want to check a copy of Cormen
+  or maybe even a functional language implementation of Red-Black trees.
+* Instead, going to do 2 from treaps: insert and find.
+* Again, need to use Min/Max and MaxPrio rather than set operations. No MinPrio
+  since the priorities are in heap-order
+  - Starting with treap find, after adding lemmas that the support of keys,
+    priorities, MinKey, MaxKey, and MaxPrio are all equal to the support of
+    Treap, everything but the cases where we only search have the tree go
+    through. Clearly, we need the appropriate lemmas
+  - Also needed to add mentions of left(x) and right(x) to the post condition
+  - Note: My post-condition is slightly more powerful than the VCDryad one,
+    since I'm saying x is still a treap and has the same keys as before, it's
+    a pretty trivial addition, but worth mentioning I think
