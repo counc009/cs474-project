@@ -27,8 +27,14 @@
 
 (lemma (x) (< (key x) plus_infty))
 (lemma (x) (> (key x) minus_infty))
+
 (lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
-(lemma (x) (=> (List x)   (= (SPKeys x) (SPList x))))
+(lemma (x) (=> (Sorted x) (= (SPMin x) (SPSorted x))))
+(lemma (x) (=> (Sorted x) (= (SPMax x) (SPSorted x))))
+
+(lemma (x) (=> (List x) (= (SPKeys x) (SPList x))))
+(lemma (x) (=> (List x) (= (SPMin x) (SPList x))))
+(lemma (x) (=> (List x) (= (SPMax x) (SPList x))))
 
 (Var y Loc)
 (Var z Loc)
@@ -56,7 +62,8 @@
 
 (Program concat_sorted (t1 leftkeys t2 rightkeys ret))
 (Pre (and (Sorted t1) (Sorted t2) (= leftkeys (Keys t1)) (= rightkeys (Keys t2))
-          (<= (Max t1) (Min t2))))
+          (<= (Max t1) (Min t2))
+          (= EmptySetLoc (SetIntersect (Sp (Sorted t1)) (Sp (Sorted t2)))) ))
 (Post (and (Sorted ret) (= (Keys ret) (SetUnion leftkeys rightkeys))))
 
 (If (= t1 nil)
@@ -76,7 +83,10 @@
 (Pre (and (List cur) (List lpt) (List rpt)
           (<= (Max lpt) pivot) (<= pivot (Min rpt))
           (= oldkeysx (SetAdd (SetUnion (Keys cur)
-                        (SetUnion (Keys lpt) (Keys rpt))) pivot))))
+                        (SetUnion (Keys lpt) (Keys rpt))) pivot)) 
+          (= EmptySetLoc (SetIntersect (Sp (List cur)) (Sp (List lpt))))
+          (= EmptySetLoc (SetIntersect (Sp (List cur)) (Sp (List rpt))))
+          (= EmptySetLoc (SetIntersect (Sp (List lpt)) (Sp (List rpt)))) ))
 (Post (and (List lpt) (List rpt) (<= (Max lpt) pivot) (<= pivot (Min rpt))
            (= oldkeysx (SetAdd (SetUnion (Keys lpt) (Keys rpt)) pivot))))
 

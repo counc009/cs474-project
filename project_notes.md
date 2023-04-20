@@ -438,3 +438,43 @@ Monday, April 17, 2023
       and right of x to the post condition in a tautology
   - It now fully verifies.
 * Moving next to insert
+  - I'm going to implement a slightly different version than theirs, I don't
+    particularly like the condition that k not be in the tree already
+  - Again, we have 6 BBs: 1 is x = nil, 2 is k = key(x), 3 is checking the
+    precondition on the recursive call on left(x), 4 is the full case where we
+    go into left(x), 5 is the precondition for the recursion on right(x), and
+    6 is the full case with right(x)
+    + BBs 1, 2, 3, and 5 all verify immediately (I killed BB 4 after 5 minutes
+      and didn't give 6 a chance)
+    + My guess is that we need lemmas like I had in sorted insert saying giving
+      properties about lists who's keys are the same as some other list with
+      one additional element added
+  - After adding that lemma, it still isn't verifying BB 4 in a reasonable
+    length of time.
+  - The issue seems to be the assignment to left(x), which suggests the issue
+    is support; specifically I found that it must have been the support of
+    Min/Max, so I'm going to add lemmas similar to the support lemma for keys,
+    though in this case the support for Min/Max is a subset of the support for
+    BST
+  - It seems to also need left(ret) and right(ret) to be mentioned in the post
+    condition. Takes 1.5 minutes to varify (as Supportless) 
+
+Tuesday, April 18, 2023
+* I'm going back to quick sort just because I really would like to actually
+  have it verified.
+  - Of concat\_sorted, BB 1 (t1 = nil) and BB 2 (pre-condition on recursive
+    call) verify quickly. BB 3 seems not to.
+  - BB 3 needs to strengthen the pre-condition to mention that t1 is not in
+    the support of Sorted(t2), and add lemmas about the support of Min/Max and
+    that they're equal with the support of Sorted
+  - However, now BB 2 won't verify presumably because it doesn't recognize that
+    next(t1) is not in the support of Sorted(t2) either, so going to change
+    it to be that the intersection of their supports is empty.
+  - All 3 BBs in concat sorted now verify.
+  - Moving on to partition, BB 4 (cur = nil) verifies
+  - BB 5 fails, the issue is the assignment to next(cur) which because of the
+    supports it can't prove doesn't affect lpt/rpt. Adding to the precondition
+    that the intersection of the supports of cur/lpt/rpt (pairwise) is empty.
+  - This allows BB 5 and BB 6 to verify. BB 7 can verify as a RelaxedPost
+    condition but not as a full Post, meaning the issue must be that it can't
+    prove something is still part of the support
