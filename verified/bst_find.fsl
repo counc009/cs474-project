@@ -13,11 +13,27 @@
 (Var x Loc)
 
 (RecDef (Min x) (ite (= x nil) plus_infty
-                (ite (= (left x) nil) (key x)
-                     (Min (left x)))))
+                (ite (<= (key x) (Min (left x)))
+                  (ite (<= (key x) (Min (right x)))
+                    (key x)
+                    (Min (right x))
+                  )
+                  (ite (<= (Min (left x)) (Min (right x)))
+                    (Min (left x))
+                    (Min (right x))
+                  )
+                )))
 (RecDef (Max x) (ite (= x nil) minus_infty
-                (ite (= (right x) nil) (key x)
-                     (Max (right x)))))
+                (ite (>= (key x) (Max (left x)))
+                  (ite (>= (key x) (Max (right x)))
+                    (key x)
+                    (Max (right x))
+                  )
+                  (ite (>= (Max (left x)) (Max (right x)))
+                    (Max (left x))
+                    (Max (right x))
+                  )
+                )))
 
 (RecDef (BST x) (ite (= x nil) True
                      (and (BST (left x))  (< (Max (left x)) (key x))
