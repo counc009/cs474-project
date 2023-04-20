@@ -482,3 +482,6 @@ Tuesday, April 18, 2023
 Thursday, April 20, 2023
 * I have everything in quick sort verified except for BB 7/8, which are issues
   with the support.
+  - One thing to note here, I had weird issued because I had assigned next x
+    to nil in the main function, removing this (it had no real purpose) made
+    several things suddenly be able to be verified.
