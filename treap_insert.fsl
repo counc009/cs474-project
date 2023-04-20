@@ -134,6 +134,10 @@
       (return)
      Else
       (assign lr (right tmp))
+      /* This is always true, since in this case prio(tmp) = p and so all other
+         priorities in tmp must be smaller than the priority of x since x was
+         a Treap */
+      (assume (< (MaxPrio lr) (prio x)))
       (assign (left x) lr)
       (assign (right tmp) x)
       (assign ret tmp)
