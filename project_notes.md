@@ -499,3 +499,21 @@ Thursday, April 20, 2023
   - Note: My post-condition is slightly more powerful than the VCDryad one,
     since I'm saying x is still a treap and has the same keys as before, it's
     a pretty trivial addition, but worth mentioning I think
+* Going to do treap insert next, I would again remove the condition that k not
+  be in the keys already because I find it a weird restriction but, I believe
+  the condition that the priority is new is necessary and to be able to say
+  that the priorities add the new priorty requires that we always insert. I
+  could weaken the post-condition to say that either the new set of priorities
+  is the old set of priorities or adds the new priority, but I think I'll just
+  keep what they did.
+  - Just from writing it and having to think about how and why the code works,
+    I have a pretty good suspicion I'm going to have to provide several lemmas
+    about priorities and how MaxPrio relates to the Priorities set.
+  - I also probably need the lemmas about how Min/Max for keys are affected by
+    the addition of a key, so will do a similar one for priorities.
+  - BB 4 and 7 fail to verify even with all of this, I believe because the
+    tool does not recognize that lr/rl must have priorities less than prio(x).
+    Since prio(tmp) > prio(x), it follows that prio(tmp) = p and so the
+    priorities of the children must be the original priorities and we knew that
+    MaxPrio of those was less than prio(x).
+

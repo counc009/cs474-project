@@ -1,0 +1,160 @@
+(Function key   Loc Int)
+(Function prio  Loc Int)
+(Function left  Loc Loc)
+(Function right Loc Loc)
+
+(RecFunction MinKey  Loc Int)
+(RecFunction MaxKey  Loc Int)
+(RecFunction MaxPrio Loc Int)
+
+(RecFunction Treap      Loc Bool)
+(RecFunction Keys       Loc SetInt)
+(RecFunction Priorities Loc SetInt)
+
+(Var x Loc)
+(Var plus_infty Int)
+(Var minus_infty Int)
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (< minus_infty (key x)))
+(lemma (x) (< minus_infty (prio x)))
+
+(RecDef (MinKey x)
+  (ite (= x nil) plus_infty
+    (ite (<= (key x) (MinKey (left x)))
+      (ite (<= (key x) (MinKey (right x)))
+        (key x)
+        (MinKey (right x))
+      )
+      (ite (<= (MinKey (left x)) (MinKey (right x)))
+        (MinKey (left x))
+        (MinKey (right x))))))
+
+(RecDef (MaxKey x)
+  (ite (= x nil) minus_infty
+    (ite (>= (key x) (MaxKey (left x)))
+      (ite (>= (key x) (MaxKey (right x)))
+        (key x)
+        (MaxKey (right x))
+      )
+      (ite (>= (MaxKey (left x)) (MaxKey (right x)))
+        (MaxKey (left x))
+        (MaxKey (right x))))))
+(RecDef (MaxPrio x)
+  (ite (= x nil) minus_infty
+    (ite (>= (prio x) (MaxPrio (left x)))
+      (ite (>= (prio x) (MaxPrio (right x)))
+        (prio x)
+        (MaxPrio (right x))
+      )
+      (ite (>= (MaxPrio (left x)) (MaxPrio (right x)))
+        (MaxPrio (left x))
+        (MaxPrio (right x))))))
+
+(RecDef (Treap x)
+  (ite (= x nil) True
+    (and (Treap (left x))  (< (MaxKey (left x)) (key x))  (< (MaxPrio (left x)) (prio x))
+         (Treap (right x)) (< (key x) (MinKey (right x))) (< (MaxPrio (right x)) (prio x))
+         (= EmptySetInt (SetIntersect (Priorities (left x)) (Priorities (right x))))
+         (not (IsMember x (Sp (Treap (antiSp (left x))))))
+         (not (IsMember x (Sp (Treap (antiSp (right x))))))
+         (= EmptySetInt (SetIntersect (Sp (Treap (antiSp (left x))))
+                                      (Sp (Treap (antiSp (right x))))))
+         )))
+
+(RecDef (Keys x)
+  (ite (= x nil) EmptySetInt
+    (SetAdd (SetUnion (Keys (left x)) (Keys (right x))) (key x))))
+(RecDef (Priorities x)
+  (ite (= x nil) EmptySetInt
+    (SetAdd (SetUnion (Priorities (left x)) (Priorities (right x))) (prio x))))
+
+(Var k Int)
+(Var p Int)
+(Var ret Loc)
+(Var aux Loc)
+
+(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (Keys x)))))
+(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (Priorities x)))))
+(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MinKey x)))))
+(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MaxKey x)))))
+(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MaxPrio x)))))
+
+(lemma (x) (=> (< k (MinKey x)) (not (IsMember k (Keys x)))))
+(lemma (x) (=> (> k (MaxKey x)) (not (IsMember k (Keys x)))))
+
+(Var l1 Loc)
+(Var l2 Loc)
+(lemma (l1 l2) (=> (= (Keys l1) (SetAdd (Keys l2) k))
+                   (ite (< k (MinKey l2))
+                     (= (MinKey l1) k)
+                     (= (MinKey l1) (MinKey l2)))))
+(lemma (l1 l2) (=> (= (Keys l1) (SetAdd (Keys l2) k))
+                   (ite (> k (MaxKey l2))
+                     (= (MaxKey l1) k)
+                     (= (MaxKey l1) (MaxKey l2)))))
+(lemma (l1 l2) (=> (= (Priorities l1) (SetAdd (Priorities l2) p))
+                   (ite (> p (MaxPrio l2))
+                     (= (MaxPrio l1) p)
+                     (= (MaxPrio l1) (MaxPrio l2)))))
+
+(Var leaf Loc)
+(Var xl Loc)
+(Var xr Loc)
+(Var tmp Loc)
+(Var lr Loc)
+(Var rl Loc)
+
+(Program treap_insert (x k p ret))
+(Pre (and (Treap x) (not (IsMember k (Keys x))) (not (IsMember p (Priorities x)))))
+(Post (and (Treap ret) (= (Keys ret) (SetAdd (Old (Keys x)) k))
+           (= (Priorities ret) (SetAdd (Old (Priorities x)) p))))
+
+(If (= x nil)
+ Then
+  (alloc leaf)
+  (assume (not (= leaf nil)))
+  (assign (key leaf) k)
+  (assign (prio leaf) p)
+  (assign (left leaf) nil)
+  (assign (right leaf) nil)
+  (assign ret leaf)
+  (return)
+ Else
+  (If (< k (key x))
+   Then
+    (assign xr (right x))
+    (assign xl (left x))
+    (call treap_insert (xl k p tmp))
+
+    (If (<= (prio tmp) (prio x))
+     Then
+      (assign (left x) tmp)
+      (assign ret x)
+      (return)
+     Else
+      (assign lr (right tmp))
+      (assign (left x) lr)
+      (assign (right tmp) x)
+      (assign ret tmp)
+      (return)
+    )
+   Else
+    (assign xr (right x))
+    (assign xl (left x))
+    (call treap_insert (xr k p tmp))
+
+    (If (<= (prio tmp) (prio x))
+     Then
+      (assign (right x) tmp)
+      (assign ret x)
+      (return)
+     Else
+      (assign rl (left tmp))
+      (assign (right x) rl)
+      (assign (left tmp) x)
+      (assign ret tmp)
+      (return)
+    )
+  )
+)
