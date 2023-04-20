@@ -118,7 +118,6 @@
  Else
   (assign cur (next x))
   (assign pivot (key x))
-  (assign (next x) nil)
   (assign lpt nil)
   (assign rpt nil)
 

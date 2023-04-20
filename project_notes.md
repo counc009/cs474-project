@@ -478,3 +478,7 @@ Tuesday, April 18, 2023
   - This allows BB 5 and BB 6 to verify. BB 7 can verify as a RelaxedPost
     condition but not as a full Post, meaning the issue must be that it can't
     prove something is still part of the support
+
+Thursday, April 20, 2023
+* I have everything in quick sort verified except for BB 7/8, which are issues
+  with the support.
