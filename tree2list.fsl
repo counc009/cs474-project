@@ -1,0 +1,103 @@
+(Function left  Loc Loc)
+(Function right Loc Loc)
+(Function next  Loc Loc)
+(Function key   Loc Int)
+
+(RecFunction MinList  Loc Int)
+(RecFunction MinTree  Loc Int)
+(RecFunction MaxTree  Loc Int)
+
+(RecFunction Sorted   Loc Bool)
+(RecFunction ListKeys Loc SetInt)
+(RecFunction BST      Loc Bool)
+(RecFunction TreeKeys Loc SetInt)
+
+(Var plus_infty  Int)
+(Var minus_infty Int)
+
+(Var x Loc)
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (< minus_infty (key x)))
+
+(RecDef (MinList x) (ite (= x nil) plus_infty
+                      (ite (<= (key x) (MinList (next x)))
+                        (key x) (MinList (next x)) )))
+(RecDef (MinTree x) (ite (= x nil) plus_infty
+                      (ite (<= (key x) (MinTree (left x)))
+                        (ite (<= (key x) (MinTree (right x)))
+                          (key x) (MinTree (right x)))
+                        (ite (<= (MinTree (left x)) (MinTree (right x)))
+                          (MinTree (left x)) (MinTree (right x)) ))))
+(RecDef (MaxTree x) (ite (= x nil) minus_infty
+                      (ite (>= (key x) (MaxTree (left x)))
+                        (ite (>= (key x) (MaxTree (right x)))
+                          (key x) (MaxTree (right x)))
+                        (ite (>= (MaxTree (left x)) (MaxTree (right x)))
+                          (MaxTree (left x)) (MaxTree (right x)) ))))
+
+(RecDef (Sorted x) (ite (= x nil) True
+                      (and (Sorted (next x)) (<= (key x) (MinList (next x)))
+                           (not (IsMember x (Sp (Sorted (antiSp (next x)))))) )))
+(RecDef (ListKeys x) (ite (= x nil) EmptySetInt (SetAdd (ListKeys x) (key x))))
+
+(RecDef (BST x) (ite (= x nil) True
+                  (and (BST (left x))  (<= (MaxTree (left x)) (key x))
+                       (BST (right x)) (<= (key x) (MinTree (right x)))
+                       (not (IsMember x (Sp (BST (antiSp (left x))))))
+                       (not (IsMember x (Sp (BST (antiSp (right x))))))
+                       (= EmptySetLoc
+                        (SetIntersect (Sp (BST (antiSp (left x))))
+                                      (Sp (BST (antiSp (right x)))))) )))
+(RecDef (TreeKeys x) (ite (= x nil) EmptySetInt
+                      (SetAdd (SetUnion (TreeKeys (left x)) (TreeKeys (right x)))
+                        (key x))))
+
+(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (TreeKeys x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (Sorted x)) (Sp (ListKeys x)))))
+
+(Var l1 Loc)
+(Var l2 Loc)
+(Var l3 Loc)
+(lemma (l1 l2 l3) (=> (= (ListKeys l1) (SetUnion (ListKeys l2) (TreeKeys l3)))
+                      (ite (<= (MinList l2) (MinTree l3))
+                        (= (MinList l1) (MinList l2))
+                        (= (MinList l1) (MinTree l3)) )))
+
+(Var t Loc)
+(Var l Loc)
+(Var ret Loc)
+
+(Var lnode Loc)
+(Var tkey Int)
+(Var tright Loc)
+(Var tleft Loc)
+(Var tmp Loc)
+
+(Program tree2list (t l ret))
+(Pre (and (BST t) (Sorted l) (<= (MaxTree t) (MinList l))
+          (= EmptySetLoc (SetIntersect (Sp (BST t)) (Sp (Sorted l)))) ))
+(Post (and (Sorted ret)
+        (= (ListKeys ret) (SetUnion (Old (TreeKeys t)) (Old (ListKeys l)))) ))
+
+(If (= t nil)
+ Then
+  (assign ret l)
+  (return)
+ Else
+  (alloc lnode)
+  (assume (not (= lnode nil)))
+
+  (assign tkey (key t))
+  (assign (key lnode) tkey)
+
+  (assign tright (right t))
+  (assign tleft  (left t))
+
+  (call tree2list (tright l tmp))
+  (assign (next lnode) tmp)
+
+  (free t)
+
+  (call tree2list (tleft lnode ret))
+  (return)
+)
