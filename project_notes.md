@@ -517,3 +517,47 @@ Thursday, April 20, 2023
     priorities of the children must be the original priorities and we knew that
     MaxPrio of those was less than prio(x).
 
+Saturday, April 22, 2023
+* Going to go back to Red-Black trees. I'm going to implement it myself in a
+  somewhat custom manner. I'm mostly basing this on Cormen et al. (the
+  traditional data structures textbook) and Okasaki's "Red-black trees in a
+  functional setting" (Journal of Functional Programming, 1999).
+  - I'm going to define RBTs as being BSTs where both sub-trees are RBTs, the
+    black-heights of the sub-trees are equal, and the root is black or both
+    children are black.
+  - This will allow me to express "partial" RBT properties which are necessary
+    during the insertion process where we may end up with 2 red nodes next to
+    each other (this is directly inspired by Okasaki's presentation). I also do
+    not include Cormen's property that the root is always black since that
+    would prevent us from stating that the sub-trees are RBTs.
+  - The helper for insert takes an RBT and the post-condition is that the
+    returned result is still a BST, its keys has the added key, the sub-trees
+    are RBT, the black-height does not increase, and the root is black or at
+    least one child is black.
+  - To get the actual insert function to verify, I need to add lemmas that the
+    support of the BST is equal to the support of Min/Max, and also that if
+    x is a BST, x is not in the support of RBT(left(x)) and similarly for right
+  - Oh... I think I'm understanding the version in VCDryad better. The issue is
+    that two red nodes next to each other can only result if the grandparent is
+    black.
+    + There can only be two reds in a row if the root of that sub-tree was red
+      to begin with, so we need to strengthen the post condition to reflect
+      that
+
+Sunday, April 23, 2023
+* Adding the condition regarding the original color of the node both cases
+  where the result has a black node can be verified. I also add the case where
+  both children are black to those cases and the cases are verified, actually
+  faster than not including that part of the case (from like 35 minutes for the
+  left case to 5 minutes, though for the right case it was only ever like 3
+  minutes and is down to 1.5).
+  - Moving in to start implementing the actual rotations (following Okasaki's
+    diagram), the first one is the left-most on Okasaki's diagram.
+    + Doesn't seem to be verifying (gave it 80 minutes), maybe an issue with
+      regards to lemmas that might be needed to allow the disconnecting and
+      reconnecting to be verified.
+    + I'm going to start testing whether it can prove BST properties and then
+      go on to the RBT properties.
+    + Interestingly, it can prove that x is a BST, so it seems the issue is the
+      red-black properties. It's able to prove left(x) and right(x) are RBT,
+      though it took 12 minutes. It's now able to prove RBT(x) in 4.5 minutes.

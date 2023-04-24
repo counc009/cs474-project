@@ -98,6 +98,17 @@
                      (= (MaxPrio l1) p)
                      (= (MaxPrio l1) (MaxPrio l2)))))
 
+(lemma (x) (=> (and (Treap x) (not (= x nil)))
+               (ite (= (left x) nil)
+                    (= (MinKey x) (key x))
+                    (= (MinKey x) (MinKey (left x))))))
+(lemma (x) (=> (and (Treap x) (not (= x nil)))
+               (ite (= (right x) nil)
+                    (= (MaxKey x) (key x))
+                    (= (MaxKey x) (MaxKey (right x))))))
+(lemma (x) (=> (and (Treap x) (not (= x nil)))
+               (= (MaxPrio x) (prio x))))
+
 (Var leaf Loc)
 (Var xl Loc)
 (Var xr Loc)
@@ -134,9 +145,6 @@
       (return)
      Else
       (assign lr (right tmp))
-      /* This is always true, since in this case prio(tmp) = p and so all other
-         priorities in tmp must be smaller than the priority of x since x was
-         a Treap */
       (assume (< (MaxPrio lr) (prio x)))
       (assign (left x) lr)
       (assign (right tmp) x)
