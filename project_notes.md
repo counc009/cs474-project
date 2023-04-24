@@ -561,3 +561,8 @@ Sunday, April 23, 2023
     + Interestingly, it can prove that x is a BST, so it seems the issue is the
       red-black properties. It's able to prove left(x) and right(x) are RBT,
       though it took 12 minutes. It's now able to prove RBT(x) in 4.5 minutes.
+
+Monday, April 24, 2023
+* I started working on tree2list, which takes a BST and converts it into a
+  sorted list. It won't verify automatically, and it appears to me that this
+  has something to do with the function calls and alloc.
