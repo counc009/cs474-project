@@ -39,7 +39,10 @@
                      (and (BST (left x))  (< (Max (left x)) (key x))
                           (BST (right x)) (< (key x) (Min (right x)))
                           (not (IsMember x (Sp (BST (antiSp (left x))))))
-                          (not (IsMember x (Sp (BST (antiSp (right x)))))) )))
+                          (not (IsMember x (Sp (BST (antiSp (right x))))))
+                          (= EmptySetLoc
+                            (SetIntersect (Sp (BST (antiSp (left x))))
+                                          (Sp (BST (antiSp (right x)))))) )))
 (RecDef (Keys x) (ite (= x nil) EmptySetInt
                       (SetAdd (SetUnion (Keys (left x)) (Keys (right x)))
                               (key x))))
