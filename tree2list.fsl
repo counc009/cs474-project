@@ -38,7 +38,8 @@
 (RecDef (Sorted x) (ite (= x nil) True
                       (and (Sorted (next x)) (<= (key x) (MinList (next x)))
                            (not (IsMember x (Sp (Sorted (antiSp (next x)))))) )))
-(RecDef (ListKeys x) (ite (= x nil) EmptySetInt (SetAdd (ListKeys x) (key x))))
+(RecDef (ListKeys x) (ite (= x nil) EmptySetInt
+                                    (SetAdd (ListKeys (next x)) (key x))))
 
 (RecDef (BST x) (ite (= x nil) True
                   (and (BST (left x))  (<= (MaxTree (left x)) (key x))
@@ -53,7 +54,10 @@
                         (key x))))
 
 (lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (TreeKeys x)))))
+(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (MinTree x)))))
+(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (MaxTree x)))))
 (lemma (x) (=> (Sorted x) (= (Sp (Sorted x)) (Sp (ListKeys x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (Sorted x)) (Sp (MinList x)))))
 
 (Var l1 Loc)
 (Var l2 Loc)
@@ -66,12 +70,24 @@
 (Var t Loc)
 (Var l Loc)
 (Var ret Loc)
+(Var k Int)
 
 (Var lnode Loc)
 (Var tkey Int)
 (Var tright Loc)
 (Var tleft Loc)
 (Var tmp Loc)
+
+(Program insertlist (l k ret))
+(Pre (and (Sorted l) (<= k (MinList l))))
+(Post (and (Sorted ret) (= (ListKeys ret) (SetAdd (Old (ListKeys l)) k))
+           (= (MinList ret) k) ))
+
+(alloc ret)
+(assume (not (= ret nil)))
+(assign (key  ret) k)
+(assign (next ret) l)
+(return)
 
 (Program tree2list (t l ret))
 (Pre (and (BST t) (Sorted l) (<= (MaxTree t) (MinList l))
@@ -84,20 +100,15 @@
   (assign ret l)
   (return)
  Else
-  (alloc lnode)
-  (assume (not (= lnode nil)))
-
   (assign tkey (key t))
-  (assign (key lnode) tkey)
 
   (assign tright (right t))
   (assign tleft  (left t))
 
   (call tree2list (tright l tmp))
-  (assign (next lnode) tmp)
-
-  (free t)
-
+  (call insertlist (tmp tkey lnode))
   (call tree2list (tleft lnode ret))
+  
+  (free t)
   (return)
 )

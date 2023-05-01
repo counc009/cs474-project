@@ -566,3 +566,8 @@ Monday, April 24, 2023
 * I started working on tree2list, which takes a BST and converts it into a
   sorted list. It won't verify automatically, and it appears to me that this
   has something to do with the function calls and alloc.
+  - I'm going to put the insert procedure into a helper function, and adding a
+    post-condition that states the MinList(ret) = k (where k is the value that
+    was inserted, and the pre-condition states is less than the list's min).
+  - The free seems to also be causing some issues, so first going to move it to
+    the end, and may then return the tree if needed.
