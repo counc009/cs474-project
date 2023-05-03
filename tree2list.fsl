@@ -92,7 +92,7 @@
 (Program tree2list (t l ret))
 (Pre (and (BST t) (Sorted l) (<= (MaxTree t) (MinList l))
           (= EmptySetLoc (SetIntersect (Sp (BST t)) (Sp (Sorted l)))) ))
-(Post (and (Sorted ret)
+(Post (and (Sorted ret) (BST t) (= (Old (TreeKeys t)) (TreeKeys t))
         (= (ListKeys ret) (SetUnion (Old (TreeKeys t)) (Old (ListKeys l)))) ))
 
 (If (= t nil)
@@ -109,6 +109,5 @@
   (call insertlist (tmp tkey lnode))
   (call tree2list (tleft lnode ret))
   
-  (free t)
   (return)
 )

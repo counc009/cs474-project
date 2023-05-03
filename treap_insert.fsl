@@ -58,7 +58,7 @@
          (= EmptySetInt (SetIntersect (Priorities (left x)) (Priorities (right x))))
          (not (IsMember x (Sp (Treap (antiSp (left x))))))
          (not (IsMember x (Sp (Treap (antiSp (right x))))))
-         (= EmptySetInt (SetIntersect (Sp (Treap (antiSp (left x))))
+         (= EmptySetLoc (SetIntersect (Sp (Treap (antiSp (left x))))
                                       (Sp (Treap (antiSp (right x))))))
          )))
 
