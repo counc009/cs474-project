@@ -34,6 +34,9 @@
   - Insert Front (`verified/cl_insert_front.fsl`): fully verifies; my version
     uses much stronger conditions than the version in the repository already,
     specifically that version does not mention keys at all while mine does.
+  - Find (`verified/cl_find.fsl`): fully verifies; this program is not in the
+    VCDryad examples because their specification does not mention keys, but
+    mine supports it so I'm including it
 * Binary Search Tree
   - Find (`verified/bst_find.fsl`): fully verifies; note that this version is
     basically the same as the one in the repository already except that it is
