@@ -52,11 +52,9 @@
 
 (Program sorted_merge (x y oldkeysx oldkeysy ret))
 (Pre (and (Sorted x) (Sorted y)
-          (= (SetIntersect (Sp (Sorted x)) (Sp (Sorted y))) EmptySetLoc)))
+          (= (SetIntersect (Sp (Sorted x)) (Sp (Sorted y))) EmptySetLoc)
+          (= oldkeysx (Keys x)) (= oldkeysy (Keys y)) ))
 (Post (and (Sorted ret) (= (Keys ret) (SetUnion oldkeysx oldkeysy))))
-
-(assume (= oldkeysx (Keys x)))
-(assume (= oldkeysy (Keys y)))
 
 (If (= x nil)
  Then
