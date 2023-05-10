@@ -24,15 +24,13 @@
 (lemma (x) (=> (> (Min x) k) (not (IsMember k (Keys x)))))
 
 (Var ret Bool)
-(Var oldkeysx SetInt)
 (Var aux Loc)
-(Var auxkeys SetInt)
 
-(Program sorted_find (x oldkeysx k ret))
-(Pre (and (Sorted x) (= (Keys x) oldkeysx)))
-(Post (and (Sorted x) (= (Keys x) oldkeysx)
-           (=> (= ret True) (IsMember k oldkeysx))
-           (=> (IsMember k oldkeysx) (= ret True))))
+(Program sorted_find (x k ret))
+(Pre (Sorted x))
+(Post (and (Sorted x) (= (Keys x) (Old (Keys x)))
+           (=> (= ret True) (IsMember k (Keys x)))
+           (=> (IsMember k (Keys x)) (= ret True))))
 
 (If (= x nil)
  Then
@@ -50,8 +48,7 @@
       (return)
      Else
       (assign aux (next x))
-      (assign auxkeys (Keys aux))
-      (call sorted_find (aux auxkeys k ret))
+      (call sorted_find (aux k ret))
       (return)
     )
   )
