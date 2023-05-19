@@ -1,0 +1,53 @@
+(Var x Loc)
+(Var k Int)
+
+(Function next Loc Loc)
+(Function key  Loc Int)
+
+(Var plus_infty Int)
+(RecFunction Min Loc Int)
+(RecDef (Min x) (ite (= x nil) plus_infty (ite (< (key x) (Min (next x))) (key x) (Min (next x)))))
+
+(RecFunction Keys   Loc SetInt)
+(RecFunction Sorted Loc Bool)
+
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                 (SetAdd (Keys (next x)) (key x))))
+(RecDef (Sorted x) (ite (= x nil) True
+                      (and (Sorted (next x))
+                           (not (IsMember x (Sp (Sorted (antiSp (next x))))))
+                           (<= (key x) (Min (next x))))))
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
+
+(Var l1 Loc)
+(Var l2 Loc)
+(lemma (l1 l2) (=> (= (Keys l1) (SetDel (Keys l2) k))
+                   (<= (Min l2) (Min l1))))
+
+(Var ret Loc)
+(Var nxt Loc)
+(Var tmp Loc)
+
+(Program sorted_delete (x k ret))
+(Pre (Sorted x))
+(Post (and (Sorted ret) (= (Keys ret) (SetDel (Old (Keys x)) k)) ))
+
+(If (= x nil)
+ Then
+  (assign ret x)
+  (return)
+ Else (If (= (key x) k)
+ Then
+  (assign nxt (next x))
+  (call sorted_delete (nxt k ret))
+  (free x)
+  (return)
+ Else
+  (assign nxt (next x))
+  (call sorted_delete (nxt k tmp))
+  (assign (next x) tmp)
+  (assign ret x)
+  (return)
+))
