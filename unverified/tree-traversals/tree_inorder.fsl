@@ -13,17 +13,19 @@
 
 (RecDef (Tree x) (ite (= x nil) True
                       (and (Tree (left x)) (Tree (right x))
-                           (not (IsMember x (Sp (Tree (left x)))))
-                           (not (IsMember x (Sp (Tree (right x)))))
-                           (= EmptySetLoc (SetIntersect (Sp (Tree (left x)))
-                                                        (Sp (Tree (right x))))))))
+                           (not (IsMember x (Sp (Tree (antiSp (left x))))))
+                           (not (IsMember x (Sp (Tree (antiSp (right x))))))
+                           (= EmptySetLoc (SetIntersect
+                                            (Sp (Tree (antiSp (left x))))
+                                            (Sp (Tree (antiSp (right x)))))))))
 
 (RecDef (InTree x) (ite (= x nil) True
                         (and (InTree (left x)) (InTree (right x))
-                             (not (IsMember x (Sp (InTree (left x)))))
-                             (not (IsMember x (Sp (InTree (right x)))))
-                             (= EmptySetLoc (SetIntersect (Sp (Tree (left x)))
-                                                          (Sp (Tree (right x)))))
+                             (not (IsMember x (Sp (InTree (antiSp (left x))))))
+                             (not (IsMember x (Sp (InTree (antiSp (right x))))))
+                             (= EmptySetLoc (SetIntersect
+                                              (Sp (Tree (antiSp (left x))))
+                                              (Sp (Tree (antiSp (right x))))))
                              (ite (= (left x) nil) True
                                   (= (+ (+ (Order (left x)) (RSize (left x)))
                                         (IntConst 1))
