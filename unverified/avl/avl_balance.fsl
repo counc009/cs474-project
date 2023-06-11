@@ -1,0 +1,272 @@
+(Var x Loc)
+
+(Function left   Loc Loc)
+(Function right  Loc Loc)
+(Function key    Loc Int)
+(Function height Loc Int)
+
+(RecFunction Min  Loc Int)
+(RecFunction Max  Loc Int)
+(Var plus_infty Int)
+(Var minus_infty Int)
+
+(lemma (x) (< (key x) plus_infty))
+(lemma (x) (< minus_infty (key x)))
+
+(RecDef (Min x) (ite (= x nil) plus_infty
+                (ite (<= (key x) (Min (left x)))
+                  (ite (<= (key x) (Min (right x)))
+                    (key x)
+                    (Min (right x))
+                  )
+                  (ite (<= (Min (left x)) (Min (right x)))
+                    (Min (left x))
+                    (Min (right x))
+                  )
+                )))
+(RecDef (Max x) (ite (= x nil) minus_infty
+                (ite (>= (key x) (Max (left x)))
+                  (ite (>= (key x) (Max (right x)))
+                    (key x)
+                    (Max (right x))
+                  )
+                  (ite (>= (Max (left x)) (Max (right x)))
+                    (Max (left x))
+                    (Max (right x))
+                  )
+                )))
+
+(RecFunction AVL    Loc Bool)
+(RecFunction Keys   Loc SetInt)
+(RecFunction Height Loc Int)
+
+(RecDef (AVL x) (ite (= x nil) True
+                     (and (AVL (left x))  (< (Max (left x)) (key x))
+                          (AVL (right x)) (< (key x) (Min (right x)))
+                          (not (IsMember x (Sp (AVL (antiSp (left x))))))
+                          (not (IsMember x (Sp (AVL (antiSp (right x))))))
+                          (= EmptySetLoc (SetIntersect (Sp (AVL (antiSp (left x))))
+                                                       (Sp (AVL (antiSp (right x))))))
+                          (or
+                            (and (= (Height (left x)) (Height (right x)))
+                                 (= (height x) (+ (Height (left x)) (IntConst 1))))
+                            (and (= (Height (left x)) (+ (Height (right x)) (IntConst 1)))
+                                 (= (height x) (+ (Height (right x)) (IntConst 2))))
+                            (and (= (Height (right x)) (+ (Height (left x)) (IntConst 1)))
+                                 (= (height x) (+ (Height (left x)) (IntConst 2))))))))
+
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                                (SetAdd
+                                  (SetUnion (Keys (left x)) (Keys (right x)))
+                                  (key x))))
+
+(RecDef (Height x) (ite (= x nil) (IntConst 0)
+                                  (ite (< (Height (left x)) (Height (right x)))
+                                       (+ (IntConst 1) (Height (right x)))
+                                       (+ (IntConst 1) (Height (left x))))))
+
+(lemma (x) (=> (AVL x) (= (Sp (AVL x)) (Sp (Keys   x)))))
+(lemma (x) (=> (AVL x) (= (Sp (AVL x)) (Sp (Min    x)))))
+(lemma (x) (=> (AVL x) (= (Sp (AVL x)) (Sp (Max    x)))))
+(lemma (x) (=> (AVL x) (= (Sp (AVL x)) (Sp (Height x)))))
+
+(Var tmp Loc)
+(Var ret Loc)
+(Var retHeight Int)
+
+(Var lht Int)
+(Var llht Int)
+(Var lrht Int)
+(Var rht Int)
+(Var rlht Int)
+(Var rrht Int)
+
+(Var inc_inc_lht Int)
+(Var inc_inc_lrht Int)
+(Var inc_inc_rht Int)
+(Var inc_inc_rlht Int)
+(Var inc_lht Int)
+(Var inc_llht Int)
+(Var inc_lrht Int)
+(Var inc_rht Int)
+(Var inc_rlht Int)
+(Var inc_rrht Int)
+
+(Var ptr_right Loc)
+(Var ptr_left Loc)
+
+(Var left_left Loc)
+(Var left_right Loc)
+(Var left_right_left Loc)
+(Var left_right_right Loc)
+(Var right_left Loc)
+(Var right_left_left Loc)
+(Var right_left_right Loc)
+(Var right_right Loc)
+
+(Program avl_balance (x ret))
+(Pre (and (AVL (left x))  (< (Max (left x)) (key x))
+          (AVL (right x)) (< (key x) (Min (right x)))
+          (= EmptySetLoc (SetIntersect (Sp (AVL (antiSp (left x))))
+                                       (Sp (AVL (antiSp (right x))))))
+          (not (IsMember x (Sp (AVL (antiSp (left x))))))
+          (not (IsMember x (Sp (AVL (antiSp (right x))))))
+          (<= (Height (right x)) (+ (IntConst 2) (Height (left x))))
+          (<= (Height (left x))  (+ (IntConst 2) (Height (right x)))) ))
+(Post (and (AVL ret)
+           (= (Keys ret) (SetAdd (SetUnion (Old (Keys (left x)))
+                                           (Old (Keys (right x)))) (key x)))
+           (ite (= (Old (Height (right x))) (+ (IntConst 1) (Old (Height (left x)))))
+                (= (Height ret) (+ (IntConst 1) (Old (Height (right x)))))
+           (ite (= (Old (Height (left x))) (+ (IntConst 1) (Old (Height (right x)))))
+                (= (Height ret) (+ (IntConst 1) (Old (Height (left x)))))
+           (ite (= (Old (Height (left x))) (Old (Height (right x))))
+                (= (Height ret) (+ (IntConst 1) (Old (Height (left x)))))
+           (ite (= (Old (Height (right x))) (+ (IntConst 2) (Old (Height (left x)))))
+                (ite (= (Old (Height (left (right x)))) (Old (Height (right (right x)))))
+                     (= (Height ret) (+ (IntConst 1) (Old (Height (right x)))))
+                     (= (Height ret) (Old (Height (right x)))))
+           (ite (= (Old (Height (left x))) (+ (IntConst 2) (Old (Height (right x)))))
+                (ite (= (Old (Height (left (left x)))) (Old (Height (right (left x)))))
+                     (= (Height ret) (+ (IntConst 1) (Old (Height (left x)))))
+                     (= (Height ret) (Old (Height (left x)))))
+                False))))) ))
+
+(If (= (left x) nil)
+ Then
+  (assign lht (IntConst -1))
+ Else
+  (assign lht (height (left x)))
+)
+(If (= (right x) nil)
+ Then
+  (assign rht (IntConst -1))
+ Else
+  (assign rht (height (right x)))
+)
+
+(assign ptr_right (right x))
+(assign ptr_left (left x))
+
+(If (= rht (+ (IntConst 2) lht))
+ Then
+  (If (= (left ptr_right) nil)
+   Then
+    (assign rlht (IntConst -1))
+   Else
+    (assign rlht (height (left ptr_right)))
+  )
+  (If (= (right ptr_right) nil)
+   Then
+    (assign rrht (IntConst -1))
+   Else
+    (assign rrht (height (right ptr_right)))
+  )
+
+  (assign right_left (left ptr_right))
+  (assign right_right (right ptr_right))
+
+  (If (<= rlht rrht)
+   Then
+    (assign inc_rlht (+ (IntConst 1) rlht))
+    (assign (height x) inc_rlht)
+    
+    (assign (right x)  right_left)
+
+    (assign inc_inc_rlht (+ (IntConst 2) rlht))
+    (assign (height ptr_right) inc_inc_rlht)
+    (assign (left ptr_right) x)
+
+    (assign ret ptr_right)
+    (return)
+   Else
+    (assign right_left_left (left right_left))
+    (assign right_left_right (right right_left))
+
+    (assign inc_lht (+ (IntConst 1) lht))
+    (assign (height x) inc_lht)
+
+    (assign (right x) right_left_left)
+
+    (assign inc_rrht (+ (IntConst 1) rrht))
+    (assign (height ptr_right) inc_rrht)
+
+    (assign (left ptr_right) right_left_right)
+
+    (assign inc_inc_lht (+ (IntConst 2) lht))
+    (assign (height right_left) inc_inc_lht)
+    
+    (assign (left right_left) x)
+    (assign (right right_left) ptr_right)
+
+    (assign ret right_left)
+    (return)
+  )
+ Else (If (= lht (+ (IntConst 2) rht))
+ Then
+  (If (= (left ptr_left) nil)
+   Then
+    (assign llht (IntConst -1))
+   Else
+    (assign llht (height (left ptr_left)))
+  )
+  (If (= (right ptr_left) nil)
+   Then
+    (assign lrht (IntConst -1))
+   Else
+    (assign lrht (height (right ptr_left)))
+  )
+
+  (assign left_left (left ptr_left))
+  (assign left_right (right ptr_left))
+
+  (If (<= lrht llht)
+   Then
+    (assign inc_lrht (+ (IntConst 1) lrht))
+    (assign (height x) inc_lrht)
+
+    (assign (left x) left_right)
+
+    (assign inc_inc_lrht (+ (IntConst 2) lrht))
+    (assign (height ptr_left) inc_inc_lrht)
+
+    (assign (right ptr_left) x)
+    
+    (assign ret ptr_left)
+    (return)
+   Else
+    (assign left_right_left (left left_right))
+    (assign left_right_right (right left_right))
+
+    (assign inc_rht (+ (IntConst 1) rht))
+    (assign (height x) inc_rht)
+    
+    (assign (left x) left_right_right)
+
+    (assign inc_llht (+ (IntConst 1) llht))
+    (assign (height ptr_left) inc_llht)
+
+    (assign (right ptr_left) left_right_left)
+
+    (assign inc_inc_rht (+ (IntConst 2) rht))
+    (assign (height left_right) inc_inc_rht)
+
+    (assign (left left_right) ptr_left)
+
+    (assign (right left_right) x)
+
+    (assign ret left_right)
+    (return)
+  )
+ Else (If (= rht (+ (IntConst 1) lht))
+ Then
+  (assign inc_rht (+ (IntConst 1) rht))
+  (assign (height x) inc_rht)
+  (assign ret x)
+  (return)
+ Else
+  (assign inc_lht (+ (IntConst 1) lht))
+  (assign (height x) (inc_lht))
+  (assign ret x)
+  (return)
+)))
