@@ -13,14 +13,16 @@
 (RecDef (Keys x) (ite (= x nil) EmptySetInt
                       (SetAdd (Keys (next x)) (key x))))
 
-(Var oldkeysx SetInt)
+(lemma (x) (=> (List x) (= (Sp (List x)) (Sp (Keys x)))))
+
 (Var ret Bool)
 (Var aux Loc)
 (Var auxkeys SetInt)
 
-(Program sll_find (x k oldkeysx ret))
-(Pre (and (List x) (= (Keys x) oldkeysx)))
-(Post (and (List x) (= (Keys x) oldkeysx) (=> (= ret True) (IsMember k (Keys x))) (=> (IsMember k (Keys x)) (= ret True))))
+(Program sll_find (x k) (ret))
+(Pre (List x))
+(Post (and (List x) (= (Keys x) (Old (Keys x))) 
+           (= ret (IsMember k (Keys x))) ))
 
 (If (= x nil)
  Then
@@ -33,8 +35,7 @@
     (return)
    Else
     (assign aux (next x))
-    (assign auxkeys (Keys aux))
-    (call sll_find (aux k auxkeys ret))
+    (call sll_find (aux k) (ret))
     (return)
   )
 )

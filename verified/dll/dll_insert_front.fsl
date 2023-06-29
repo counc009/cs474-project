@@ -20,7 +20,7 @@
 (Var k Int)
 (Var ret Loc)
 
-(Program dll_mid_insert (x k ret))
+(Program dll_mid_insert (x k) (ret))
 (Pre (DLL x))
 (Post (and (DLL ret) (= (Keys ret) (SetAdd (Old (Keys x)) k))
            (ite True True (= (next (next ret)) (next (next ret)))) ))

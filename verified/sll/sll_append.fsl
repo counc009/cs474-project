@@ -19,8 +19,9 @@
 (Var tmp Loc)
 (Var ret Loc)
 
-(Program sll_append (x y ret))
-(Pre (and (List x) (List y) (= EmptySetLoc (SetIntersect (Sp (List x)) (Sp (List y)))) ))
+(Program sll_append (x y) (ret))
+(Pre (and (List x) (List y) 
+          (= EmptySetLoc (SetIntersect (Sp (List x)) (Sp (List y)))) ))
 (Post (and (List ret) (= (Keys ret) (SetUnion (Old (Keys x)) (Old (Keys y)))) ))
 
 (If (= x nil)
@@ -29,7 +30,7 @@
   (return)
  Else
   (assign aux (next x))
-  (call sll_append (aux y tmp))
+  (call sll_append (aux y) (tmp))
   (assign (next x) tmp)
   (assign ret x)
   (return)

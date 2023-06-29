@@ -18,7 +18,7 @@
 (Var nxt Loc)
 (Var tmp Loc)
 
-(Program sll_copy_all (x ret))
+(Program sll_copy_all (x) (ret))
 (Pre (List x))
 (Post (and (List x) (= (Keys x) (Old (Keys x)))
            (List ret) (= (Keys ret) (Old (Keys x)))
@@ -30,7 +30,7 @@
   (return)
  Else
   (assign nxt (next x))
-  (call sll_copy_all (nxt tmp))
+  (call sll_copy_all (nxt) (tmp))
   (alloc ret)
   (assume (not (= ret nil)))
   (assign (key ret) (key x))

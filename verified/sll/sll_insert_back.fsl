@@ -17,9 +17,9 @@
 (Var aux Loc)
 (Var tmp Loc)
 
-(Program sll_insert_back (x k ret))
+(Program sll_insert_back (x k) (ret))
 (Pre (List x))
-(Post (and (List ret) (= (Keys ret) (SetAdd (Old (Keys x)) k))))
+(Post (and (List ret) (= (Keys ret) (SetAdd (Old (Keys x)) k)) ))
 
 (If (= x nil)
  Then
@@ -30,7 +30,7 @@
   (return)
  Else
   (assign aux (next x))
-  (call sll_insert_back (aux k tmp))
+  (call sll_insert_back (aux k) (tmp))
   (assign (next x) tmp)
   (assign ret x)
   (return)
