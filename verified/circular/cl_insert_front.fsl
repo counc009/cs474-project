@@ -25,14 +25,13 @@
 (lemma (x y) (=> (Lseg x y) (= (Sp (Lseg x y)) (Sp (CKys x y)))))
 
 (Var k Int)
-(Var oldkeysx SetInt)
 (Var tmp Loc)
 (Var ret Loc)
 (Var n Loc)
 
-(Program cl_insert_front (x oldkeysx k ret))
-(Pre (and (Circ x) (= oldkeysx (Keys x)) ))
-(Post (and (Circ ret) (= (Keys ret) (SetAdd oldkeysx k))
+(Program cl_insert_front (x k) (ret))
+(Pre (Circ x))
+(Post (and (Circ ret) (= (Keys ret) (SetAdd (Old (Keys x)) k))
            (ite True True (= (next (next ret)) (next (next ret)))) ))
 
 (alloc n)
