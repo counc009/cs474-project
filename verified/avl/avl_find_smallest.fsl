@@ -70,7 +70,7 @@
 (Var tmp Loc)
 (Var ret Int)
 
-(Program avl_find_smallest (x ret))
+(Program avl_find_smallest (x) (ret))
 (Pre  (and (AVL x) (not (= x nil)) ))
 (Post (and (AVL x) (not (= x nil)) (= (Keys x) (Old (Keys x)))
            (= (Height x) (Old (Height x))) (= ret (Old (Min x))) ))
@@ -81,6 +81,6 @@
   (return)
  Else
   (assign tmp (left x))
-  (call avl_find_smallest (tmp ret))
+  (call avl_find_smallest (tmp) (ret))
   (return)
 )
