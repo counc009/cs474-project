@@ -22,26 +22,26 @@
                       (and (List (next x))
                            (not (IsMember x (Sp (List (antiSp (next x)))))))))
 
-(lemma (x) (< (key x) plus_infty))
-(lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
+(RecFunction NonNil Loc Bool)
+(RecDef (NonNil x) (not (= x nil)))
+(lemma (x) (=> (NonNil x) (< (key x) plus_infty)))
+
+(lemma (x) (=> (Sorted x) (= (Sp (Keys x)) (Sp (Sorted x)))))
 (lemma (x) (=> (Sorted x) (= (Sp (List x)) (Sp (Sorted x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (Min x)) (Sp (Sorted x)))))
 (lemma (x) (=> (List x) (= (Sp (Keys x)) (Sp (List x)))))
-
+(lemma (x) (=> (List x) (= (Sp (Min x)) (Sp (List x)))))
 (lemma (x) (=> (Sorted x) (List x)))
-
-(Var l1 Loc)
-(Var l2 Loc)
-(lemma (l1 l2) (=> (= (Keys l1) (SetAdd (Keys l2) k))
-                   (ite (< k (Min l2)) (= (Min l1) k) (= (Min l1) (Min l2)))))
 
 (Var y Loc)
 (Var ret Loc)
 (Var nxt Loc)
 (Var tmp Loc)
 
-(Program sorted_insert (x ret))
+(Program sorted_insert (x) (ret))
 (Pre (and (not (= x nil)) (List x) (Sorted (next x)) ))
-(Post (and (Sorted ret) (= (Keys ret) (Old (Keys x))) ))
+(Post (and (Sorted ret) (= (Keys ret) (Old (Keys x)))
+           (= (Min ret) (Old (Min x))) ))
 
 (assign nxt (next x))
 (If (= nxt nil)
@@ -51,7 +51,7 @@
  Else (If (> (key x) (key nxt))
  Then
   (assign (next x) (next nxt))
-  (call sorted_insert (x tmp))
+  (call sorted_insert (x) (tmp))
   (assign (next nxt) tmp)
   (assign ret nxt)
   (return)
@@ -60,7 +60,7 @@
   (return)
 ))
 
-(Program insertion_sort (x ret))
+(Program insertion_sort (x) (ret))
 (Pre (List x))
 (Post (and (Sorted ret) (= (Keys ret) (Old (Keys x))) ))
 
@@ -70,8 +70,8 @@
   (return)
  Else
   (assign nxt (next x))
-  (call insertion_sort (nxt tmp))
+  (call insertion_sort (nxt) (tmp))
   (assign (next x) tmp)
-  (call sorted_insert (x ret))
+  (call sorted_insert (x) (ret))
   (return)
 )
