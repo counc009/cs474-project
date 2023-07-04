@@ -23,17 +23,19 @@
                       (SetAdd (CKys (next x) x) (key x))))
 
 (lemma (x y) (=> (Lseg x y) (= (Sp (Lseg x y)) (Sp (CKys x y)))))
+(lemma (x y) (=> (Lseg x y) (not (IsMember y (Sp (Lseg x y))))))
 
 (Var k Int)
 (Var tmp Loc)
 (Var ret Loc)
-(Var oldkeys SetInt)
 
-(Program find_end (x y ret))
+(Program find_end (x y) (ret))
 (Pre (and (Lseg x y) (not (= x nil)) (not (= y nil)) (not (= x y)) ))
-(Post (and (Lseg x y) (= (CKys x y) (Old (CKys x y)))
-           (Lseg x ret) (= (next ret) y)
-           (IsMember ret (Sp (Lseg x y))) ))
+(Post (and (Lseg x y) (= (CKys x y) (Old (CKys x y))) (not (= ret nil))
+           (Lseg x ret) (= (next ret) y) 
+           (not (IsMember y (Sp (Lseg x ret)))) (IsMember ret (Sp (Lseg x y)))
+           (= (Sp (Lseg x y)) (SetAdd (Sp (Lseg x ret)) ret))
+           (= (SetAdd (CKys x ret) (key ret)) (Old (CKys x y))) ))
 
 (If (= (next x) y)
  Then
@@ -41,14 +43,15 @@
   (return)
  Else
   (assign tmp (next x))
-  (call find_end (tmp y ret))
+  (call find_end (tmp y) (ret))
   (return)
 )
 
-(Program cl_delete_front (x ret))
-(Pre (and (Circ x)
-      (ite (= x nil) (= oldkeys EmptySetInt) (= oldkeys (CKys (next x) x))) ))
-(Post (and (Circ ret) (= (Keys ret) oldkeys) ))
+(Program cl_delete_front (x) (ret))
+(Pre (Circ x))
+(Post (and (Circ ret) 
+           (ite (= x nil) (= (Keys ret) EmptySetInt)
+                          (= (Keys ret) (Old (CKys (next x) x)))) ))
 
 (If (= x nil)
  Then
@@ -60,9 +63,9 @@
   (assign ret nil)
   (return)
  Else
-  (assign ret (next x))
-  (call find_end (x ret tmp))
-  (assign (next tmp) ret)
+  (assign tmp (next x))
+  (call find_end (tmp x) (ret))
+  (assign (next ret) tmp)
   (free x)
   (return)
 ))
