@@ -22,10 +22,6 @@
                       (and (List (next x))
                            (not (IsMember x (Sp (List (antiSp (next x)))))))))
 
-(RecFunction NonNil Loc Bool)
-(RecDef (NonNil x) (not (= x nil)))
-(lemma (x) (=> (NonNil x) (< (key x) plus_infty)))
-
 (lemma (x) (=> (Sorted x) (= (Sp (Keys x)) (Sp (Sorted x)))))
 (lemma (x) (=> (Sorted x) (= (Sp (List x)) (Sp (Sorted x)))))
 (lemma (x) (=> (Sorted x) (= (Sp (Min x)) (Sp (Sorted x)))))
@@ -46,6 +42,7 @@
 (assign nxt (next x))
 (If (= nxt nil)
  Then
+  (assume (<= (key x) plus_infty))
   (assign ret x)
   (return)
  Else (If (> (key x) (key nxt))

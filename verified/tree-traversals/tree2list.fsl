@@ -16,8 +16,6 @@
 (Var minus_infty Int)
 
 (Var x Loc)
-(lemma (x) (< (key x) plus_infty))
-(lemma (x) (< minus_infty (key x)))
 
 (RecDef (MinList x) (ite (= x nil) plus_infty
                       (ite (<= (key x) (MinList (next x)))
@@ -42,8 +40,8 @@
                                     (SetAdd (ListKeys (next x)) (key x))))
 
 (RecDef (BST x) (ite (= x nil) True
-                  (and (BST (left x))  (<= (MaxTree (left x)) (key x))
-                       (BST (right x)) (<= (key x) (MinTree (right x)))
+                  (and (BST (left x))  (< (MaxTree (left x)) (key x))
+                       (BST (right x)) (< (key x) (MinTree (right x)))
                        (not (IsMember x (Sp (BST (antiSp (left x))))))
                        (not (IsMember x (Sp (BST (antiSp (right x))))))
                        (= EmptySetLoc
@@ -53,19 +51,17 @@
                       (SetAdd (SetUnion (TreeKeys (left x)) (TreeKeys (right x)))
                         (key x))))
 
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (TreeKeys x)))))
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (MinTree x)))))
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (MaxTree x)))))
-(lemma (x) (=> (Sorted x) (= (Sp (Sorted x)) (Sp (ListKeys x)))))
-(lemma (x) (=> (Sorted x) (= (Sp (Sorted x)) (Sp (MinList x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (MinTree x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (MaxTree x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (TreeKeys x)) (Sp (BST x)))))
 
-(Var l1 Loc)
-(Var l2 Loc)
-(Var l3 Loc)
-(lemma (l1 l2 l3) (=> (= (ListKeys l1) (SetUnion (ListKeys l2) (TreeKeys l3)))
-                      (ite (<= (MinList l2) (MinTree l3))
-                        (= (MinList l1) (MinList l2))
-                        (= (MinList l1) (MinTree l3)) )))
+(lemma (x) (=> (Sorted x) (= (Sp (ListKeys x)) (Sp (Sorted x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (MinList x)) (Sp (Sorted x)))))
+
+(lemma (x) (=> (BST x) (=> (and (not (= x nil)) (<= (key x) plus_infty))
+                          (ite (= (left x) nil)
+                            (= (MinTree x) (key x))
+                            (= (MinTree x) (MinTree (left x)))))))
 
 (Var t Loc)
 (Var l Loc)
@@ -78,7 +74,7 @@
 (Var tleft Loc)
 (Var tmp Loc)
 
-(Program insertlist (l k ret))
+(Program insertlist (l k) (ret))
 (Pre (and (Sorted l) (<= k (MinList l))))
 (Post (and (Sorted ret) (= (ListKeys ret) (SetAdd (Old (ListKeys l)) k))
            (= (MinList ret) k) ))
@@ -89,11 +85,17 @@
 (assign (next ret) l)
 (return)
 
-(Program tree2list (t l ret))
+(Program tree2list (t l) (ret))
 (Pre (and (BST t) (Sorted l) (<= (MaxTree t) (MinList l))
           (= EmptySetLoc (SetIntersect (Sp (BST t)) (Sp (Sorted l)))) ))
-(Post (and (Sorted ret) (BST t) (= (Old (TreeKeys t)) (TreeKeys t))
-        (= (ListKeys ret) (SetUnion (Old (TreeKeys t)) (Old (ListKeys l)))) ))
+(Post (and (BST t) (= (TreeKeys t) (Old (TreeKeys t)))
+                   (= (MinTree t) (Old (MinTree t)))
+                   (= (MaxTree t) (Old (MaxTree t)))
+           (Sorted ret)
+           (= (ListKeys ret) (SetUnion (Old (TreeKeys t)) (Old (ListKeys l))))
+           (ite (= t nil) (= (MinList ret) (Old (MinList l)))
+                          (= (MinList ret) (Old (MinTree t))))
+           (= EmptySetLoc (SetIntersect (Sp (BST t)) (Sp (Sorted ret)))) ))
 
 (If (= t nil)
  Then
@@ -101,13 +103,14 @@
   (return)
  Else
   (assign tkey (key t))
+  (assume (<= tkey plus_infty))
 
   (assign tright (right t))
   (assign tleft  (left t))
 
-  (call tree2list (tright l tmp))
-  (call insertlist (tmp tkey lnode))
-  (call tree2list (tleft lnode ret))
+  (call tree2list (tright l) (tmp))
+  (call insertlist (tmp tkey) (lnode))
+  (call tree2list (tleft lnode) (ret))
   
   (return)
 )

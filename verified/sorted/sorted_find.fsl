@@ -21,9 +21,7 @@
 (lemma (x) (=> (Sorted x) (= (SPKeys x) (SPSorted x))))
 (lemma (x) (=> (Sorted x) (= (Sp (Min x)) (Sp (Sorted x)))))
 
-(RecFunction MinGreaterThanK Loc Bool)
-(RecDef (MinGreaterThanK x) (> (Min x) k))
-(lemma (x) (=> (MinGreaterThanK x) (not (IsMember k (Keys x)))))
+(lemma (x) (=> (Sorted x) (=> (< k (Min x)) (not (IsMember k (Keys x))))))
 
 (Var ret Bool)
 (Var aux Loc)

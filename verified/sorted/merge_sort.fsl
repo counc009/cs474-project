@@ -22,9 +22,6 @@
                            (not (IsMember x (Sp (Sorted (antiSp (next x))))))
                            (<= (key x) (Min (next x))))))
 
-(RecFunction NonNil Loc Bool)
-(RecDef (NonNil x) (not (= x nil)))
-(lemma (x) (=> (NonNil x) (< (key x) plus_infty)))
 (lemma (x) (=> (Sorted x) (<= (Min x) plus_infty)))
 (lemma (x) (=> (Sorted x) (= (Sp (Keys x)) (Sp (Sorted x)))))
 (lemma (x) (=> (List x)   (= (Sp (Keys x)) (Sp (List x)))))
@@ -112,6 +109,7 @@
  Else
   (If (= (next x) nil)
    Then /* singleton list */
+    (assume (<= (key x) plus_infty))
     (assign ret x)
     (return)
    Else /* List of length >= 2 */
