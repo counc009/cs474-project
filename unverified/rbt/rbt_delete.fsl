@@ -67,34 +67,17 @@
                       (SetAdd (SetUnion (Keys (left x)) (Keys (right x)))
                               (key x))))
 
-(lemma (x) (< (key x) plus_infty))
-(lemma (x) (< minus_infty (key x)))
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (Keys x)))))
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (Min x)))))
-(lemma (x) (=> (BST x) (= (Sp (BST x)) (Sp (Max x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (Min x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (Max x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (Keys x)) (Sp (BST x)))))
 (lemma (x) (=> (RBT x) (= (Sp (RBT x)) (Sp (BST x)))))
 
-(lemma (x) (=> (BST x) (not (IsMember x (Sp (RBT (antiSp (left x))))))))
-(lemma (x) (=> (BST x) (not (IsMember x (Sp (RBT (antiSp (right x))))))))
+(lemma (x) (=> (RBT x) (=> (not (= x nil))
+                          (not (IsMember x (Sp (RBT (antiSp (left x)))))))))
+(lemma (x) (=> (RBT x) (=> (not (= x nil))
+                          (not (IsMember x (Sp (RBT (antiSp (right x)))))))))
 
 (Var k Int)
-(Var t1 Loc)
-(Var t2 Loc)
-(Var t3 Loc)
-(lemma (t1 t2) (=> (= (Keys t1) (SetDel (Keys t2) k))
-                   (<= (Min t2) (Min t1))))
-(lemma (t1 t2) (=> (= (Keys t1) (SetDel (Keys t2) k))
-                   (<= (Max t1) (Max t2))))
-(lemma (t1 t2) (=> (= (Keys t1) (SetAdd (Keys t2) k))
-                   (ite (<= k (Min t2)) (= (Min t1) k) (= (Min t1) (Min t2)))))
-(lemma (t1 t2) (=> (= (Keys t1) (SetAdd (Keys t2) k))
-                   (ite (>= k (Max t2)) (= (Max t1) k) (= (Max t1) (Max t2)))))
-(lemma (t1 t2 t3) (=> (= (Keys t3) (SetUnion (Keys t1) (Keys t2)))
-                      (ite (<= (Min t1) (Min t2)) (= (Min t3) (Min t1))
-                                                  (= (Min t3) (Min t2)))))
-(lemma (t1 t2 t3) (=> (= (Keys t3) (SetUnion (Keys t1) (Keys t2)))
-                      (ite (>= (Max t1) (Max t2)) (= (Max t3) (Max t1))
-                                                  (= (Max t3) (Max t2)))))
 
 (Var iret Int)
 (Var fixed Bool)
@@ -120,10 +103,11 @@
 (Var xrlcolor Int)
 (Var xrrcolor Int)
 
-(Program rbt_find_smallest (x iret))
+(Program rbt_find_smallest (x) (iret))
 (Pre (and (RBT x) (not (= x nil)) ))
 (Post (and (RBT x) (= (Keys x) (Old (Keys x))) (= (BH x) (Old (BH x)))
-           (= iret (Min x)) ))
+           (= (Min x) (Old (Min x))) (= (Max x) (Old (Max x)))
+           (= (Black x) (Old (Black x))) (= iret (Min x)) ))
 
 (If (= (left x) nil)
  Then
@@ -131,15 +115,16 @@
   (return)
  Else
   (assign tmp (left x))
-  (call rbt_find_smallest (tmp iret))
+  (call rbt_find_smallest (tmp) (iret))
   (return)
 )
 
-(Program rbt_delete_left_fixup (x ret fixed))
+(Program rbt_delete_left_fixup (x) (ret fixed))
 (Pre (and (BST x) (RBT (left x)) (RBT (right x)) (Black (left x))
           (= (+ (IntConst 1) (BH (left x))) (BH (right x)))
           (ite (= (color x) (IntConst 0)) True (Black (right x))) ))
 (Post (and (RBT ret) (= (Keys ret) (Old (Keys x)))
+           (= (Min ret) (Old (Min x))) (= (Max ret) (Old (Max x)))
            (ite (Black ret) True (not (Old (Black x))))
            (ite fixed (= (BH ret) (Old (BH x)))
                       (and (not (Old (Black x)))
@@ -157,7 +142,7 @@
   (assign (left xr) x)
   (assign (color x) (IntConst 1))
   (assign (color xr) (IntConst 0))
-  (call rbt_delete_left_fixup (x tmp fixed))
+  (call rbt_delete_left_fixup (x) (tmp fixed))
   (assign (left xr) tmp)
   (assign ret xr)
   (return)
@@ -200,11 +185,12 @@
   )
 )
 
-(Program rbt_delete_right_fixup (x ret fixed))
+(Program rbt_delete_right_fixup (x) (ret fixed))
 (Pre (and (BST x) (RBT (left x)) (RBT (right x)) (Black (right x))
           (= (+ (IntConst 1) (BH (right x))) (BH (left x)))
           (ite (= (color x) (IntConst 0)) True (Black (left x))) ))
 (Post (and (RBT ret) (= (Keys ret) (Old (Keys x)))
+           (= (Min ret) (Old (Min ret))) (= (Max ret) (Old (Max ret)))
            (ite (Black ret) True (not (Old (Black x))))
            (ite fixed (= (BH ret) (Old (BH x)))
                       (and (not (Old (Black x)))
@@ -222,7 +208,7 @@
   (assign (right xl) x)
   (assign (color x) (IntConst 1))
   (assign (color xl) (IntConst 0))
-  (call rbt_delete_right_fixup (x tmp fixed))
+  (call rbt_delete_right_fixup (x) (tmp fixed))
   (assign (right xl) tmp)
   (assign ret xl)
   (return)
@@ -265,9 +251,10 @@
   )
 )
 
-(Program rbt_delete (x k ret fixed))
-(Pre (RBP x))
-(Post (and (RBP ret) (= (Keys ret) (SetDel (Old (Keys x)) k))
+(Program rbt_delete (x k) (ret fixed))
+(Pre (RBT x))
+(Post (and (RBT ret) (= (Keys ret) (SetDel (Old (Keys x)) k))
+           (<= (Old (Min x)) (Min ret)) (<= (Max ret) (Old (Max x)))
            (ite (= (Black ret)) True (not (Old (Black x))))
            (ite (= (BH ret) (Old (BH x))) fixed
                 (and (= (BH ret) (- (Old (BH x)) (IntConst 1)))
@@ -319,23 +306,23 @@
       (return)
     )
    Else
-    (call rbt_find_smallest (xr iret))
+    (call rbt_find_smallest (xr) (iret))
     (assign (key x) iret)
-    (call rbt_delete (xr iret tmp fixed))
+    (call rbt_delete (xr iret) (tmp fixed))
     (assign (right x) tmp)
     (If fixed
      Then
       (assign ret x)
       (return)
      Else
-      (call rbt_delete_right_fixup (x ret fixed))
+      (call rbt_delete_right_fixup (x) (ret fixed))
       (return)
     )
   )))
  Else (If (< k (key x))
  Then
   (assign xl (left x))
-  (call rbt_delete (xl k tmp fixed))
+  (call rbt_delete (xl k) (tmp fixed))
   (assign (left x) tmp)
 
   (If fixed
@@ -343,12 +330,12 @@
     (assign ret x)
     (return)
    Else
-    (call rbt_delete_left_fixup (x ret fixed))
+    (call rbt_delete_left_fixup (x) (ret fixed))
     (return)
   )
  Else
   (assign xr (right x))
-  (call rbt_delete (xr k tmp fixed))
+  (call rbt_delete (xr k) (tmp fixed))
   (assign (right x) tmp)
 
   (If fixed
@@ -356,7 +343,7 @@
     (assign ret x)
     (return)
    Else
-    (call rbt_delete_right_fixup (x ret fixed))
+    (call rbt_delete_right_fixup (x) (ret fixed))
     (return)
   )
 )))
