@@ -88,13 +88,9 @@
 
 (lemma (x) (=> (Treap x) (=> (< k (MinKey x)) (not (IsMember k (Keys x))))))
 (lemma (x) (=> (Treap x) (=> (> k (MaxKey x)) (not (IsMember k (Keys x))))))
+(lemma (x) (=> (Treap x) (=> (> p (MaxPrio x)) (not (IsMember p (Priorities x))))))
 
 (lemma (x) (=> (Treap x) (=> (not (= x nil)) (= (MaxPrio x) (prio x)))))
-
-(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (key x) (Keys (left x)))))))
-(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (key x) (Keys (right x)))))))
-(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (prio x) (Priorities (left x)))))))
-(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (prio x) (Priorities (right x)))))))
 
 (Program treap_remove_root (x k p) (ret))
 (Pre (and (not (= x nil)) (Treap x) (= (key x) k) (= (prio x) p) ))
