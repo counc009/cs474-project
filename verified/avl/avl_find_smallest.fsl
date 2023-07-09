@@ -73,6 +73,7 @@
 (Program avl_find_smallest (x) (ret))
 (Pre  (and (AVL x) (not (= x nil)) ))
 (Post (and (AVL x) (not (= x nil)) (= (Keys x) (Old (Keys x)))
+           (= (Min x) (Old (Min x))) (= (Max x) (Old (Max x)))
            (= (Height x) (Old (Height x))) (= ret (Old (Min x))) ))
 
 (If (= (left x) nil)
