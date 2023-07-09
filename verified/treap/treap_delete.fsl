@@ -15,10 +15,6 @@
 (Var plus_infty Int)
 (Var minus_infty Int)
 
-(lemma (x) (< (key x) plus_infty))
-(lemma (x) (< minus_infty (key x)))
-(lemma (x) (< minus_infty (prio x)))
-
 (RecDef (MinKey x)
   (ite (= x nil) plus_infty
     (ite (<= (key x) (MinKey (left x)))
@@ -84,35 +80,32 @@
 (Var xl Loc)
 (Var xr Loc)
 
-(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (Keys x)))))
-(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (Priorities x)))))
-(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MinKey x)))))
-(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MaxKey x)))))
-(lemma (x) (=> (Treap x) (= (Sp (Treap x)) (Sp (MaxPrio x)))))
+(lemma (x) (=> (Treap x) (IsSubset (Sp (Keys x)) (Sp (Treap x)))))
+(lemma (x) (=> (Treap x) (IsSubset (Sp (Priorities x)) (Sp (Treap x)))))
+(lemma (x) (=> (Treap x) (IsSubset (Sp (MinKey x)) (Sp (Treap x)))))
+(lemma (x) (=> (Treap x) (IsSubset (Sp (MaxKey x)) (Sp (Treap x)))))
+(lemma (x) (=> (Treap x) (IsSubset (Sp (MaxPrio x)) (Sp (Treap x)))))
 
-(lemma (x) (=> (< k (MinKey x)) (not (IsMember k (Keys x)))))
-(lemma (x) (=> (> k (MaxKey x)) (not (IsMember k (Keys x)))))
+(lemma (x) (=> (Treap x) (=> (< k (MinKey x)) (not (IsMember k (Keys x))))))
+(lemma (x) (=> (Treap x) (=> (> k (MaxKey x)) (not (IsMember k (Keys x))))))
 
-(lemma (x) (=> (not (= x nil))
-               (= (SetUnion (Keys (left x)) (Keys (right x)))
-                  (SetDel (Keys x) (key x)))))
-(lemma (x) (=> (not (= x nil))
-               (= (SetUnion (Priorities (left x)) (Priorities (right x)))
-                  (SetDel (Priorities x) (prio x)))))
+(lemma (x) (=> (Treap x) (=> (not (= x nil)) (= (MaxPrio x) (prio x)))))
 
-(Var t1 Loc)
-(Var t2 Loc)
-(lemma (t1 t2) (=> (= (Keys t1) (SetDel (Keys t2) k))
-                   (>= (MinKey t1) (MinKey t2))))
-(lemma (t1 t2) (=> (= (Keys t1) (SetDel (Keys t2) k))
-                   (<= (MaxKey t1) (MaxKey t2))))
-(lemma (t1 t2) (=> (IsSubset (Priorities t1) (Priorities t2))
-                   (<= (MaxPrio t1) (MaxPrio t2))))
+(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (key x) (Keys (left x)))))))
+(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (key x) (Keys (right x)))))))
+(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (prio x) (Priorities (left x)))))))
+(lemma (x) (=> (Treap x) (=> (not (= x nil)) (not (IsMember (prio x) (Priorities (right x)))))))
 
-(Program treap_remove_root (x k p ret))
+(Program treap_remove_root (x k p) (ret))
 (Pre (and (not (= x nil)) (Treap x) (= (key x) k) (= (prio x) p) ))
 (Post (and (Treap ret) (= (Keys ret) (SetDel (Old (Keys x)) k))
-           (= (Priorities ret) (SetDel (Old (Priorities x)) p)) ))
+           (= (Priorities ret) (SetDel (Old (Priorities x)) p))
+           (<= (Old (MinKey x)) (MinKey ret)) (<= (MaxKey ret) (Old (MaxKey x)))
+           (ite (<= (Old (MaxPrio (left x))) (Old (MaxPrio (right x))))
+              (= (MaxPrio ret) (Old (MaxPrio (right x))))
+              (= (MaxPrio ret) (Old (MaxPrio (left x)))))
+           (ite True True (and (= (left ret) (left ret))
+                               (= (right ret) (right ret)))) ))
 
 (If (and (= (left x) nil) (= (right x) nil))
  Then
@@ -121,11 +114,13 @@
   (return)
  Else (If (= (left x) nil)
  Then
+  (assume (<= minus_infty (prio (right x))))
   (assign ret (right x))
   (free x)
   (return)
  Else (If (= (right x) nil)
  Then
+  (assume (<= minus_infty (prio (left x))))
   (assign ret (left x))
   (free x)
   (return)
@@ -137,26 +132,26 @@
    Then
     (assign right_left (left rht))
     (assign (right x) right_left)
-    (call treap_remove_root (x k p tmp))
+    (call treap_remove_root (x k p) (tmp))
     (assign (left rht) tmp)
     (assign ret rht)
     (return)
    Else
     (assign left_right (right lft))
     (assign (left x) left_right)
-    (call treap_remove_root (x k p tmp))
+    (call treap_remove_root (x k p) (tmp))
     (assign (right lft) tmp)
     (assign ret lft)
     (return)
   )
 )))
 
-(Program treap_delete (x k ret))
+(Program treap_delete (x k) (ret))
 (Pre (Treap x))
 (Post (and (Treap ret) (= (Keys ret) (SetDel (Old (Keys x)) k))
            (IsSubset (Priorities ret) (Old (Priorities x)))
-           (ite True True (= (left ret) (left ret)))
-           (ite True True (= (right ret) (right ret))) ))
+           (<= (Old (MinKey x)) (MinKey ret)) (<= (MaxKey ret) (Old (MaxKey x)))
+           (<= (MaxPrio ret) (Old (MaxPrio x))) ))
 
 (If (= x nil)
  Then
@@ -165,24 +160,19 @@
  Else (If (= (key x) k)
  Then
   (assign p (prio x))
-  (call treap_remove_root (x k p ret))
+  (call treap_remove_root (x k p) (ret))
   (return)
  Else (If (< k (key x))
  Then
   (assign xl (left x))
-  (call treap_delete (xl k tmp))
+  (call treap_delete (xl k) (tmp))
   (assign (left x) tmp)
   (assign ret x)
   (return)
  Else
   (assign xr (right x))
-  (call treap_delete (xr k tmp))
+  (call treap_delete (xr k) (tmp))
   (assign (right x) tmp)
   (assign ret x)
   (return)
 )))
-
-/* BB 2 & 3 fail because of free and Old seeming to have issues 
- * BB 5 & 7 run for over 5 minutes without a result
- * BB 12 & 14 run for over 15 minutes
- */
