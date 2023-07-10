@@ -127,7 +127,3 @@
   (assign ret x)
   (return)
 )))
-
-/* BB 2 & 3 fail to verify due to the free and it seems to mess up use of Old()
- * BB 5, last else case of bst_remove_root, runs for more than 6 minutes
- */

@@ -69,6 +69,3 @@
   (free x)
   (return)
 ))
-
-/* BB 5 fails to verify because of some issue with free */
-/* Not sure about BB 6 */
