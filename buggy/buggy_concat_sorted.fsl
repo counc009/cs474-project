@@ -1,0 +1,69 @@
+(Var x   Loc)
+
+(Function next Loc Loc)
+(Function key  Loc Int)
+
+(Var plus_infty Int)
+(RecFunction Min Loc Int)
+(RecDef (Min x) (ite (= x nil) plus_infty (ite (< (key x) (Min (next x))) (key x) (Min (next x)))))
+
+(Var minus_infty Int)
+(RecFunction Max Loc Int)
+(RecDef (Max x) (ite (= x nil) minus_infty (ite (> (key x) (Max (next x))) (key x) (Max (next x)))))
+
+(RecFunction List   Loc Bool)
+(RecFunction Keys   Loc SetInt)
+(RecFunction Sorted Loc Bool)
+
+(RecDef (List x) (ite (= x nil) True
+                      (and (List (next x))
+                           (not (IsMember x (Sp (List (antiSp (next x)))))))))
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                 (SetAdd (Keys (next x)) (key x))))
+(RecDef (Sorted x) (ite (= x nil) True
+                      (and (Sorted (next x))
+                           (not (IsMember x (Sp (Sorted (antiSp (next x))))))
+                           (<= (key x) (Min (next x))))))
+
+(RecFunction NonNil Loc Bool)
+(RecDef (NonNil x) (not (= x nil)))
+
+(lemma (x) (=> (Sorted x) (= (Sp (Keys x)) (Sp (Sorted x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (Min x)) (Sp (Sorted x)))))
+(lemma (x) (=> (Sorted x) (= (Sp (Max x)) (Sp (Sorted x)))))
+
+(lemma (x) (=> (List x) (= (Sp (Keys x)) (Sp (List x)))))
+(lemma (x) (=> (List x) (= (Sp (Min x)) (Sp (List x)))))
+(lemma (x) (=> (List x) (= (Sp (Max x)) (Sp (List x)))))
+
+(lemma (x) (=> (Sorted x) (=> (not (= x nil)) (<= (key x) plus_infty))))
+
+(Var y Loc)
+(Var z Loc)
+(lemma (x y) (=> (NonNil x) (=> (<= (Max x) (Min y)) (<= (Min x) (Min y)))))
+
+(Var tmp Loc)
+(Var aux Loc)
+(Var t1 Loc)
+(Var t2 Loc)
+(Var ret Loc)
+
+(Program concat_sorted (t1 t2) (ret))
+(Pre (and (Sorted t1) (Sorted t2) 
+          (= EmptySetLoc (SetIntersect (Sp (Sorted t1)) (Sp (Sorted t2)))) ))
+(Post (and (Sorted ret)
+           (= (Keys ret) (SetUnion (Old (Keys t1)) (Old (Keys t2))))
+           (ite (= t1 nil) (= (Min ret) (Old (Min t2))) (= (Min ret) (Old (Min t1))))
+           (ite (= t2 nil) (= (Max ret) (Old (Max t1))) (= (Max ret) (Old (Max t2)))) ))
+
+(If (= t1 nil)
+ Then
+  (assign ret t2)
+  (return)
+ Else
+  (assign aux (next t1))
+  (call concat_sorted (aux t2) (tmp))
+  (assign (next t1) tmp)
+  (assign ret t1)
+  (return)
+)
