@@ -40,7 +40,7 @@
                   )
                 )))
 
-(RecDef (Black x) (ite (= x nil) True (= (color x) (IntConst 1))))
+(RecDef (Black x) (ite (= x nil) True (= (color x) (IntConst 0))))
 (RecDef (BH x) (ite (= x nil) (IntConst 1)
                (ite (Black x)
                     (+ (IntConst 1)
@@ -77,7 +77,12 @@
 (lemma (x) (=> (RBT x) (=> (not (= x nil))
                           (not (IsMember x (Sp (RBT (antiSp (right x)))))))))
 
+(lemma (x) (=> (RBT x) (<= (IntConst 1) (BH x))))
+(lemma (x) (=> (RBT x) (=> (< (IntConst 1) (BH x)) (not (= x nil)))))
+
 (Var k Int)
+(lemma (x) (=> (BST x) (=> (> (Min x) k) (not (IsMember k (Keys x))))))
+(lemma (x) (=> (BST x) (=> (< (Max x) k) (not (IsMember k (Keys x))))))
 
 (Var iret Int)
 (Var fixed Bool)
@@ -111,6 +116,7 @@
 
 (If (= (left x) nil)
  Then
+  (assume (<= (key x) plus_infty))
   (assign iret (key x))
   (return)
  Else
@@ -120,14 +126,16 @@
 )
 
 (Program rbt_delete_left_fixup (x) (ret fixed))
-(Pre (and (BST x) (RBT (left x)) (RBT (right x)) (Black (left x))
+(Pre (and (not (= x nil)) (BST x) (RBT (left x)) (RBT (right x)) (Black (left x))
           (= (+ (IntConst 1) (BH (left x))) (BH (right x)))
           (ite (= (color x) (IntConst 0)) True (Black (right x))) ))
-(Post (and (RBT ret) (= (Keys ret) (Old (Keys x)))
-           (= (Min ret) (Old (Min x))) (= (Max ret) (Old (Max x)))
-           (ite (Black ret) True (not (Old (Black x))))
+(Post (and (RBT ret)                     (* 1 *)
+           (= (Keys ret) (Old (Keys x))) (* 2 *)
+           (= (Min ret) (Old (Min x)))   (* 3 *)
+           (= (Max ret) (Old (Max x)))   (* 4 *)
+           (ite (Black ret) True (not (Old (Black x)))) (* 5 *)
            (ite fixed (= (BH ret) (Old (BH x)))
-                      (and (not (Old (Black x)))
+                      (and (Old (Black x))
                            (= (BH ret) (- (Old (BH x)) (IntConst 1))))) ))
 
 (assign xl (left x))
@@ -139,7 +147,6 @@
  Then
   (assign xrl (left xr))
   (assign (right x) xrl)
-  (assign (left xr) x)
   (assign (color x) (IntConst 1))
   (assign (color xr) (IntConst 0))
   (call rbt_delete_left_fixup (x) (tmp fixed))
@@ -149,9 +156,7 @@
  Else
   (assign xrl (left xr))
   (assign xrr (right xr))
-  (assign xrlcolor (color xrl))
-  (assign xrrcolor (color xrr))
-  (If (not (= xrrcolor (IntConst 0)))
+  (If (not (Black xrr))
    Then
     (assign fixed True)
     (assign (right x) xrl)
@@ -162,9 +167,9 @@
     (assign ret xr)
     (return)
    Else
-    (If (= xrlcolor (IntConst 0))
+    (If (Black xrl)
      Then
-      (assign fixed (= xcolor (IntConst 1)))
+      (assign fixed (not (= xcolor (IntConst 0))))
       (assign (color xr) (IntConst 1))
       (assign (color x) (IntConst 0))
       (assign ret x)
@@ -186,14 +191,14 @@
 )
 
 (Program rbt_delete_right_fixup (x) (ret fixed))
-(Pre (and (BST x) (RBT (left x)) (RBT (right x)) (Black (right x))
+(Pre (and (not (= x nil)) (BST x) (RBT (left x)) (RBT (right x)) (Black (right x))
           (= (+ (IntConst 1) (BH (right x))) (BH (left x)))
           (ite (= (color x) (IntConst 0)) True (Black (left x))) ))
 (Post (and (RBT ret) (= (Keys ret) (Old (Keys x)))
            (= (Min ret) (Old (Min ret))) (= (Max ret) (Old (Max ret)))
            (ite (Black ret) True (not (Old (Black x))))
            (ite fixed (= (BH ret) (Old (BH x)))
-                      (and (not (Old (Black x)))
+                      (and (Old (Black x))
                            (= (BH ret) (- (Old (BH x)) (IntConst 1))))) ))
 
 (assign xl (left x))
@@ -215,9 +220,7 @@
  Else
   (assign xlr (right xl))
   (assign xll (left xl))
-  (assign xlrcolor (color xlr))
-  (assign xllcolor (color xll))
-  (If (not (= xllcolor (IntConst 0)))
+  (If (not (Black xll))
    Then
     (assign fixed True)
     (assign (left x) xlr)
@@ -228,9 +231,9 @@
     (assign ret xl)
     (return)
    Else
-    (If (= xlrcolor (IntConst 0))
+    (If (Black xlr)
      Then
-      (assign fixed (= xcolor (IntConst 1)))
+      (assign fixed (not (= xcolor (IntConst 0))))
       (assign (color xl) (IntConst 1))
       (assign (color x) (IntConst 0))
       (assign ret x)
@@ -253,9 +256,12 @@
 
 (Program rbt_delete (x k) (ret fixed))
 (Pre (RBT x))
-(Post (and (RBT ret) (= (Keys ret) (SetDel (Old (Keys x)) k))
+(Post (and (RBT ret) 
+           (= (Keys ret) (SetDel (Old (Keys x)) k))
            (<= (Old (Min x)) (Min ret)) (<= (Max ret) (Old (Max x)))
-           (ite (= (Black ret)) True (not (Old (Black x))))
+           (ite (and (IsMember k (Old (Keys x))) (= k (Old (Min x))))
+                (< (Old (Min x)) (Min ret)) True)
+           (ite (Black ret) True (not (Old (Black x))))
            (ite (= (BH ret) (Old (BH x))) fixed
                 (and (= (BH ret) (- (Old (BH x)) (IntConst 1)))
                      (not fixed) (Old (Black x)))) ))
@@ -271,40 +277,24 @@
   (assign xr (right x))
   (If (and (= xl nil) (= xr nil))
    Then
-    (assign fixed (= (color x) (IntConst 1)))
+    (assign fixed (not (= (color x) (IntConst 0))))
     (free x)
     (assign ret nil)
     (return)
    Else (If (= xl nil)
    Then
-    (If (not (= (color x) (IntConst 0)))
-     Then
-      (assign (color xr) (IntConst 0))
-      (free x)
-      (assign fixed True)
-      (assign ret xr)
-      (return)
-     Else
-      (assign fixed False)
-      (free x)
-      (assign ret xr)
-      (return)
-    )
+    (assign (color xr) (IntConst 0))
+    (free x)
+    (assign fixed True)
+    (assign ret xr)
+    (return)
    Else (If (= xr nil)
    Then
-    (If (not (= (color x) (IntConst 0)))
-     Then
-      (assign (color xl) (IntConst 0))
-      (free x)
-      (assign fixed True)
-      (assign ret xl)
-      (return)
-     Else
-      (assign fixed False)
-      (free x)
-      (assign ret xl)
-      (return)
-    )
+    (assign (color xl) (IntConst 0))
+    (free x)
+    (assign fixed True)
+    (assign ret xl)
+    (return)
    Else
     (call rbt_find_smallest (xr) (iret))
     (assign (key x) iret)

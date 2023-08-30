@@ -1,0 +1,497 @@
+(Function key   Loc Int)
+(Function color Loc Int)
+(Function left  Loc Loc)
+(Function right Loc Loc)
+
+(RecFunction Min  Loc Int)
+(RecFunction Max  Loc Int)
+(Var plus_infty Int)
+(Var minus_infty Int)
+
+(RecFunction Black Loc Bool)
+(RecFunction BH Loc Int)
+
+(RecFunction BST  Loc Bool)
+(RecFunction RBT  Loc Bool)
+(RecFunction Keys Loc SetInt)
+
+(Var x Loc)
+
+(RecDef (Min x) (ite (= x nil) plus_infty
+                (ite (<= (key x) (Min (left x)))
+                  (ite (<= (key x) (Min (right x)))
+                    (key x)
+                    (Min (right x))
+                  )
+                  (ite (<= (Min (left x)) (Min (right x)))
+                    (Min (left x))
+                    (Min (right x))
+                  )
+                )))
+(RecDef (Max x) (ite (= x nil) minus_infty
+                (ite (>= (key x) (Max (left x)))
+                  (ite (>= (key x) (Max (right x)))
+                    (key x)
+                    (Max (right x))
+                  )
+                  (ite (>= (Max (left x)) (Max (right x)))
+                    (Max (left x))
+                    (Max (right x))
+                  )
+                )))
+
+(RecDef (Black x) (ite (= x nil) True (= (color x) (IntConst 0))))
+(RecDef (BH x) (ite (= x nil) (IntConst 1)
+               (ite (Black x)
+                    (+ (IntConst 1)
+                      (ite (< (BH (left x)) (BH (right x)))
+                        (BH (right x)) (BH (left x))))
+                    (ite (< (BH (left x)) (BH (right x)))
+                      (BH (right x)) (BH (left x))))))
+
+(RecDef (BST x) (ite (= x nil) True
+                     (and (BST (left x))  (< (Max (left x)) (key x))
+                          (BST (right x)) (< (key x) (Min (right x)))
+                          (not (IsMember x (Sp (BST (antiSp (left x))))))
+                          (not (IsMember x (Sp (BST (antiSp (right x))))))
+                          (= EmptySetLoc (SetIntersect
+                            (Sp (BST (antiSp (left x))))
+                            (Sp (BST (antiSp (right x)))))) )))
+(RecDef (RBT x) (ite (= x nil) True
+                     (and (BST x) (RBT (left x)) (RBT (right x))
+                          (= (BH (left x)) (BH (right x)))
+                          (ite (Black x) True
+                            (and (Black (left x)) (Black (right x)))) )))
+
+(RecDef (Keys x) (ite (= x nil) EmptySetInt
+                      (SetAdd (SetUnion (Keys (left x)) (Keys (right x)))
+                              (key x))))
+
+(lemma (x) (=> (BST x) (IsSubset (Sp (Min x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (Max x)) (Sp (BST x)))))
+(lemma (x) (=> (BST x) (IsSubset (Sp (Keys x)) (Sp (BST x)))))
+(lemma (x) (=> (RBT x) (= (Sp (RBT x)) (Sp (BST x)))))
+
+(lemma (x) (=> (RBT x) (=> (not (= x nil))
+                          (not (IsMember x (Sp (RBT (antiSp (left x)))))))))
+(lemma (x) (=> (RBT x) (=> (not (= x nil))
+                          (not (IsMember x (Sp (RBT (antiSp (right x)))))))))
+
+(lemma (x) (=> (RBT x) (<= (IntConst 1) (BH x))))
+(lemma (x) (=> (RBT x) (=> (< (IntConst 1) (BH x)) (not (= x nil)))))
+
+(Var k Int)
+
+(Var iret Int)
+(Var fixed Bool)
+(Var tmp Loc)
+(Var ret Loc)
+
+(Var xl Loc)
+(Var xll Loc)
+(Var xlr Loc)
+(Var xlrl Loc)
+(Var xlrr Loc)
+(Var xr Loc)
+(Var xrl Loc)
+(Var xrr Loc)
+(Var xrll Loc)
+(Var xrlr Loc)
+
+(Var xcolor Int)
+(Var xlcolor Int)
+(Var xllcolor Int)
+(Var xlrcolor Int)
+(Var xrcolor Int)
+(Var xrlcolor Int)
+(Var xrrcolor Int)
+
+(* Algorithm Description:
+   The algorithm used in this code is the traditional implementation where we
+   can think of the removal as (potentially) creating a double-black node that
+   needs to be treated as having a color of black twice to maintain the
+   black-height balance properties of the entire tree. Then, this double black
+   node is pushed up the tree until either we can fix it (via rotations) or
+   we push it up to the root where it can simply be discarded *)
+
+(* Given a (non-empty) RBT, returns the smallest key in the tree *)
+(Program rbt_find_smallest (x) (iret))
+(Pre (and (RBT x) (not (= x nil)) ))
+(* Post Condition simply states that x is still an RBT and unchanged and that
+   the returned value is the minimum *)
+(Post (and (RBT x) (= (Keys x) (Old (Keys x))) (= (BH x) (Old (BH x)))
+           (= (Min x) (Old (Min x))) (= (Max x) (Old (Max x)))
+           (= (Black x) (Old (Black x))) (= iret (Min x)) ))
+
+(If (= (left x) nil)
+ Then
+  (* We need to assume that the key is less than infinity so that the min
+     is correct in this case, otherwise we do not know that key(x) < +inf *)
+  (assume (<= (key x) plus_infty))
+  (assign iret (key x))
+  (return)
+ Else
+  (assign tmp (left x))
+  (call rbt_find_smallest (tmp) (iret))
+  (return)
+)
+
+(* This "Left Fixup" function takes a tree (x) which is a BST and where both
+   children are RBTs, and the left subtree is colored black and its
+   black-height is one less than the black height of the right subtree.
+   We also have that if x is red (here 0 is black and 1 is red) then the right
+   subtree is also black *)
+(Program rbt_delete_left_fixup (x) (ret fixed))
+(Pre (and (not (= x nil)) (BST x) (RBT (left x)) (RBT (right x)) (Black (left x))
+          (= (+ (IntConst 1) (BH (left x))) (BH (right x)))
+          (* If x is not black then both children must be black *)
+          (ite (= (color x) (IntConst 0)) True (Black (right x))) ))
+(* Post condition is that we return an RBT, the keys/min/max are unchanged.
+   Additionally, we set "fixed" to true if the the black height of the resulting
+   RBT is the same as x was and otherwise the black height is one less than that
+   This case where the black height is one less occurs only if the root of x
+   was already black *)
+(Post (and (RBT ret)                     (* 1 *)
+           (= (Keys ret) (Old (Keys x))) (* 2 *)
+           (= (Min ret) (Old (Min x)))   (* 3 *)
+           (= (Max ret) (Old (Max x)))   (* 4 *)
+           (ite (Black ret) True (not (Old (Black x)))) (* 5 *)
+           (ite fixed (= (BH ret) (Old (BH x)))
+                      (and (Old (Black x))
+                           (= (BH ret) (- (Old (BH x)) (IntConst 1))))) (* 6 *) ))
+
+(assign xl (left x))
+(assign xr (right x))
+(assign xcolor (color x))
+(assign xrcolor (color xr))
+
+(If (not (= xrcolor (IntConst 0))) (* Right sub-tree is red *)
+ Then (* By the pre-condition we know that x must be black *)
+  (assign xrl (left xr)) (* The root of this tree must be black *)
+  (assign (right x) xrl) (* Place the left subtree of the right subtree as the
+                            right subtree of x. x is still a BST since all
+                            keys in xrl are still greater than the key of x.
+                            The black height of xrl is equal to the BH of
+                            right(x) and so is still one more than the BH of
+                            left(x) *)
+  (assign (color x) (IntConst 1)) (* Color x red (the BH of x is now one less that it was) *)
+  (* The BH of x is now the BH of xrl and since xr is an RBT, the BH of x is
+     equal to the BH of xrr *)
+  (assign (color xr) (IntConst 0)) (* Color xr (the old right(x)) black *)
+  (call rbt_delete_left_fixup (x) (tmp fixed))
+  (assign (left xr) tmp)
+  (* Assign the result of the recursive fixup call to the left child of xr.
+     All of the keys in tmp are less than the key of xr since all keys in x
+     were less than it and the call preserves the keys/min/max (conjuncts 2/3/4)
+     We know that tmp is an RBT (conjunct 1) and that right(xr) is as well
+     (by precondition and frame rule). Since xr is black, the colors of its
+     children dont matter for the red-black properties.
+     Since the root of x was red, fixed is true and we know that BH tmp is equal
+     to the BH of x when the recursive call was made (conjunct 6) , which is the
+     BH of xrr, and so both children are of equal BH and thus xr is an RBT *)
+  (assign ret xr)
+  (return)
+ Else (* Right sub-tree is black *)
+  (* Since xr is black, the BH of left(xr) and right(xr) are equal to the BH
+     of left(x) *)
+  (assign xrl (left xr))
+  (assign xrr (right xr))
+  (If (not (Black xrr))
+   Then (* right(right(x)) is red *)
+    (assign fixed True)
+    (assign (right x) xrl)
+    (* The keys in the xrl are greater than the key at x so this is still a BST,
+       the BH of left(x) and xrl are equal, and so (apart from the possibility
+       of now having two red nodes in a row) x is an RBT. We will fix the issue
+       with colors later by making x black.
+       After recoloring x to be black (later) the BH of x is equal to the
+       original black height of right(x) *)
+    (assign (left xr) x)
+    (* Keys are all less than the key of xr.
+       The black height of right(xr) is one less than the original black height
+       of right(x), we will later color xrr black making its black height
+       equal to the original BH of right(x) and so its BH will be equal to
+       the BH of x, making this is an RBT.
+       Also, both x and xrr will be colored black satisfying the property that
+       there are no two red nodes in a row *)
+    (assign (color xr) xcolor)
+    (assign (color x) (IntConst 0))
+    (assign (color xrr) (IntConst 0))
+    (* Recolor x and xrr black to ensure the RBT properties described above.
+       We also color xr the original color of x. Since the BH of what are now
+       left and right of xr is the BH of the original right(x), coloring xr
+       to be the original color of x ensures that the BH of xr is equal to
+       the original BH of x, thus satisfying the fixed properties *)
+    (assign ret xr)
+    (return)
+   Else (* right(right(x)) is black and possibly empty *)
+    (If (Black xrl)
+     Then (* left(right(x)) is black *)
+      (assign fixed (not (= xcolor (IntConst 0))))
+      (assign (color xr) (IntConst 1))
+      (assign (color x) (IntConst 0))
+      (* In this case, no rotations are needed, just recoloring, so all the
+         functional correctness properties are trivial.
+         We do not know the color of x but we know that right(x) is black as
+         are left(right(x)) and right(right(x)) and of course left(x) is
+         "double" black. 
+         We color right(x) red, hence making left(x) and right(x) have equal
+         BH and we then color x black. If x was originally red, then the
+         BH of x is now equal to the original black height of x
+         (hence we have set fixed to true), otherwise if x was black then the
+         BH of x is now one less than it was originally (hence fixed is false) *)
+      (assign ret x)
+      (return)
+     Else (* left(right(x)) is red *)
+      (* For convenience, say that the BH of right(x) is h, then
+         the BH of left(right(x)) and right(right(x)) is h-1
+         so, BH left(left(right(x))) and right(left(right(x))) are also h-1
+
+         Also, since left(right(x)) is red both of its children are black and
+         we know that right(right(x)) is black *)
+      (assign fixed True)
+      (assign xrll (left xrl))
+      (assign xrlr (right xrl))
+      (assign (left xr) xrlr)
+      (* xr is still a BST since keys of xrlr are less than the key of xr.
+         The BH of right(xr) is h-1 and so is the BH of xrlr, so their BH are
+         equal. Since right(xr) is black and xrlr is black, xr is an RBT and
+         it has BH h since xr is black *)
+      (assign (right xrl) xr)
+      (* All the keys in xr are greater than the key of xrl since xrl was
+         originally the key at left(right(x)) and the keys in xr are the
+         key originally at right(x), the keys in right(right(x)), and the
+         keys in right(left(right(x))), all of which are greater than
+         left(right(x)) by the definition of RBT. *)
+      (assign (left xrl) x)
+      (* The key at x and the keys in left(x) are all less than the key of xrl
+         since the key at xrl was from the right subtree of x. We ignore the
+         right subtree of x as we will reassign it next *)
+      (assign (right x) xrll)
+      (* Now, the keys in xrll were the keys in the left subtree of xrl
+         originally and so they are also less than the key at xrl.
+         We know that the BH of left(x) was originally one less than the BH of
+         right(x) and so we say it has BH h-1.
+         Similarly, BH of left(left(right(x))) is h-1, so BH of both children
+         of x are equal. *)
+      (assign (color xrl) xcolor)
+      (assign (color x) (IntConst 0))
+      (* By coloring x black, x is an RBT with BH h.
+         From above, xr is also an RBT with BH h.
+         The roots of both subtrees of xrl are black so the color of xrl does
+         not matter in satisfying the RBT properties, so it is an RBT.
+         We color xrl with the original color of x, and so if x was black
+         the original BH of x was h+1 and is now h+1 and if x was red then
+         the original BH of x was h and is now h; so the BH is equal to the
+         original BH and so we satisfy the properties for fixed being true *)
+      (assign ret xrl)
+      (return)
+    )
+  )
+)
+
+(* The arugment for right fixup is symmetric to the argument for left fixup *)
+(Program rbt_delete_right_fixup (x) (ret fixed))
+(Pre (and (not (= x nil)) (BST x) (RBT (left x)) (RBT (right x)) (Black (right x))
+          (= (+ (IntConst 1) (BH (right x))) (BH (left x)))
+          (ite (= (color x) (IntConst 0)) True (Black (left x))) ))
+(Post (and (RBT ret) (= (Keys ret) (Old (Keys x)))
+           (= (Min ret) (Old (Min ret))) (= (Max ret) (Old (Max ret)))
+           (ite (Black ret) True (not (Old (Black x))))
+           (ite fixed (= (BH ret) (Old (BH x)))
+                      (and (Old (Black x))
+                           (= (BH ret) (- (Old (BH x)) (IntConst 1))))) ))
+
+(assign xl (left x))
+(assign xr (right x))
+(assign xcolor (color x))
+(assign xlcolor (color xl))
+
+(If (not (= xlcolor (IntConst 0)))
+ Then
+  (assign xlr (right xl))
+  (assign (left x) xlr)
+  (assign (right xl) x)
+  (assign (color x) (IntConst 1))
+  (assign (color xl) (IntConst 0))
+  (call rbt_delete_right_fixup (x) (tmp fixed))
+  (assign (right xl) tmp)
+  (assign ret xl)
+  (return)
+ Else
+  (assign xlr (right xl))
+  (assign xll (left xl))
+  (If (not (Black xll))
+   Then
+    (assign fixed True)
+    (assign (left x) xlr)
+    (assign (right xl) x)
+    (assign (color xl) xcolor)
+    (assign (color x) (IntConst 0))
+    (assign (color xll) (IntConst 0))
+    (assign ret xl)
+    (return)
+   Else
+    (If (Black xlr)
+     Then
+      (assign fixed (not (= xcolor (IntConst 0))))
+      (assign (color xl) (IntConst 1))
+      (assign (color x) (IntConst 0))
+      (assign ret x)
+      (return)
+     Else
+      (assign fixed True)
+      (assign xlrr (right xlr))
+      (assign xlrl (left xlr))
+      (assign (right xl) xlrl)
+      (assign (left xlr) xl)
+      (assign (right xlr) x)
+      (assign (left x) xlrr)
+      (assign (color xlr) xcolor)
+      (assign (color x) (IntConst 0))
+      (assign ret xlr)
+      (return)
+    )
+  )
+)
+
+(* We will perform a normal BST deletion and then perform fixup of the tree.
+   Note that each time we call fixup, if the return has fixed = false, this
+   means that the tree is returns has a black root and if we treat that root
+   as being double black then the tree has its original BH, hence we move up
+   the tree and perform an appropriate fixup until we fix the issue and there
+   is no double black needed anymore or until we reach the root and we can
+   simply discard the double black, hence reducing the height of the RBT by
+   one *)
+(Program rbt_delete (x k) (ret fixed))
+(Pre (RBT x))
+(* Post condition is pretty standard, again fixed is true if the BH of the
+   result is equal to the original BH of x, and otherwise the BH is one less
+   than that and in that case the root of x was originally black *)
+(Post (and (RBT ret) (* 1 *)
+           (= (Keys ret) (SetDel (Old (Keys x)) k)) (* 2 *)
+           (<= (Old (Min x)) (Min ret)) (* 3 *)
+           (<= (Max ret) (Old (Max x))) (* 4 *)
+           (ite (and (IsMember k (Old (Keys x))) (= k (Old (Min x))))
+                (< (Old (Min x)) (Min ret)) True) (* 5 *)
+           (ite (Black ret) True (not (Old (Black x)))) (* 6 *)
+           (ite (= (BH ret) (Old (BH x))) fixed
+                (and (= (BH ret) (- (Old (BH x)) (IntConst 1)))
+                     (not fixed) (Old (Black x)))) (* 7 *) ))
+
+(If (= x nil)
+ Then
+  (assign fixed True)
+  (assign ret x)
+  (* Trivial case, original BH of x was 1 and still is since x = ret *)
+  (return)
+ Else (If (= k (key x))
+ Then (* Want to delete the node x *)
+  (assign xl (left x))
+  (assign xr (right x))
+  (If (and (= xl nil) (= xr nil))
+   Then
+    (assign fixed (not (= (color x) (IntConst 0))))
+    (* If both children are nil and x is colored red, then just freeing x and
+       returning nil is fixes the issue, since the BH of x was 1. If x was
+       black then BH was 2 and so we have not fixed, but what we are returning
+       is still black satisfying 6 and 7 *)
+    (free x)
+    (assign ret nil)
+    (return)
+   Else (If (= xl nil)
+   Then (* right(x) is non-nil but left(x) is nil *)
+    (* Since left(x) is nil it has BH of 1, therefore right(x) must be a signle
+       red node. Thus, x is black and so x has BH 2, so we color right(x) as
+       black, giving it BH 2, thus we set fixed to tree as we have preserved
+       the BH. Other properties follow simply from definitions *)
+    (assign (color xr) (IntConst 0))
+    (free x)
+    (assign fixed True)
+    (assign ret xr)
+    (return)
+   Else (If (= xr nil)
+   Then (* left(x) is non-nil but right(x) is nil *)
+    (* Since right(x) is nil it has BH of 1, so left(x) must be a single red
+       node and so x is black with BH 2. Color left(x) black giving it BH 2
+       and fixed is true *)
+    (assign (color xl) (IntConst 0))
+    (free x)
+    (assign fixed True)
+    (assign ret xl)
+    (return)
+   Else
+    (call rbt_find_smallest (xr) (iret)) (* Find the smallest key on the right *)
+    (assign (key x) iret)
+    (call rbt_delete (xr iret) (tmp fixed)) (* Delete the smallest key in right *)
+    (assign (right x) tmp)
+    (* Now, since iret is the smallest key in the right subtree, all keys in
+       tmp are larger than it, so (also by frame rule and since the original
+       key of x is less than iret and hence all keys in left(x) are less than
+       iret) x is not a BST *)
+    (If fixed
+     Then
+      (assign ret x)
+      (* In this case, the BH of tmp is the same as the BH of the original
+         right(x) which was the same BH as left(x) [which is unchanged] and so
+         BH of tmp and left(x) are equal. If tmp is red then right(x) must have
+         been red originally by 6 and so x would have to be black, and so it
+         would satisfy all RBT properties, otherwise tmp is black and so there
+         cannot be two red nodes next to each other and the color of x is
+         unchanged *)
+      (return)
+     Else
+      (call rbt_delete_right_fixup (x) (ret fixed))
+      (* Otherwise the issue is in the right subtree and we use the fixup
+         routine, its post conditions directly imply 6 and 7 and 1-4 follow
+         from the recursive delete, definitions, and then the preservation of
+         these properties by the right fixup *)
+      (return)
+    )
+  )))
+ Else (If (< k (key x)) (* Recurse into left subtree *)
+ Then
+  (assign xl (left x))
+  (call rbt_delete (xl k) (tmp fixed))
+  (assign (left x) tmp)
+  (* By frame rule, right(x) is still an RBT, by post condition 1 tmp is RBT,
+     by 3 follows that x is a BST. *)
+
+  (If fixed
+   Then
+    (assign ret x)
+    (* By 7, since fixed is true BH of tmp equals original BH of left(x)
+       which equals BH of right(x) [by frame rule that its unchanged and
+       definition of RBT that they were equal] and so the BH of tmp and right(x)
+       are equal so x is an RBT as long as there are no two red nodes next to
+       each other. The only way that could happen is for both x and tmp to be
+       red, but from the post condition 6, if tmp is red then left(x) had to
+       have been red originally and so x could not have been red. *)
+    (return)
+   Else
+    (call rbt_delete_left_fixup (x) (ret fixed))
+    (* Since fixed is false, we know that its BH is one lower than it was
+       originally (meaning that its black height is one lower than the right
+       subtree), we also know that tmp must be black (by 7 and 6) and so we can
+       call left fixup.
+       Then, post condition of the recursive call and left fixup post condition
+       together (along with frame rule) guarantee 1-6 (most very directly from
+       the fixup post condition) *)
+    (return)
+  )
+ Else (* Recurse into the right subtree *)
+  (* The argument in this case is symmetric to recursion into the left
+     subtree *)
+  (assign xr (right x))
+  (call rbt_delete (xr k) (tmp fixed))
+  (assign (right x) tmp)
+
+  (If fixed
+   Then
+    (assign ret x)
+    (return)
+   Else
+    (call rbt_delete_right_fixup (x) (ret fixed))
+    (return)
+  )
+)))
